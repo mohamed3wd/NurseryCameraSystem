@@ -1,0 +1,35 @@
+using System.Diagnostics;
+using MediatR;
+using Microsoft.Extensions.Logging;
+
+namespace NurseryCamera.Application.Behaviors;
+
+/// <summary>Structured logging for every request that flows through MediatR (spec section 36).</summary>
+public sealed class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : notnull
+{
+    private readonly ILogger<LoggingBehavior<TRequest, TResponse>> _logger;
+
+    public LoggingBehavior(ILogger<LoggingBehavior<TRequest, TResponse>> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    {
+        var requestName = typeof(TRequest).Name;
+        var stopwatch = Stopwatch.StartNew();
+
+        try
+        {
+            var response = await next(cancellationToken);
+            _logger.LogInformation("Handled {RequestName} in {ElapsedMs}ms", requestName, stopwatch.ElapsedMilliseconds);
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed {RequestName} after {ElapsedMs}ms", requestName, stopwatch.ElapsedMilliseconds);
+            throw;
+        }
+    }
+}

@@ -1,0 +1,92 @@
+<div class="page">
+  <a class="back-link" routerLink="/children">&larr; {{ 'child.back' | t }}</a>
+
+  @if (isLoading()) {
+    <p class="loading-text">{{ 'common.loading' | t }}</p>
+  } @else if (errorMessage()) {
+    <p class="error-text">{{ errorMessage() }}</p>
+  } @else if (child()) {
+    <div class="child-header">
+      <h1>{{ child()!.firstName }} {{ child()!.lastName }}</h1>
+      <span
+        class="badge"
+        [class.badge-success]="isCheckedIn"
+        [class.badge-neutral]="!isCheckedIn"
+      >
+        {{ isCheckedIn ? ('child.checkedIn' | t) : ('child.notCheckedIn' | t) }}
+      </span>
+    </div>
+    <p class="room-line">{{ child()!.roomName || ('children.noRoom' | t) }}</p>
+
+    <section class="card attendance-card">
+      <h2>{{ 'child.attendance' | t }}</h2>
+      @if (attendance()) {
+        <dl class="attendance-grid">
+          <div>
+            <dt>{{ 'common.status' | t }}</dt>
+            <dd>{{ attendance()!.status }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'child.checkedInAt' | t }}</dt>
+            <dd>{{ attendance()!.checkInUtc | date: 'short' }}</dd>
+          </div>
+          @if (attendance()!.checkOutUtc) {
+            <div>
+              <dt>{{ 'child.checkedOutAt' | t }}</dt>
+              <dd>{{ attendance()!.checkOutUtc | date: 'short' }}</dd>
+            </div>
+          }
+        </dl>
+      } @else {
+        <p class="muted-text">{{ 'child.noAttendance' | t }}</p>
+      }
+    </section>
+
+    <section class="camera-section">
+      <h2>{{ 'child.cameras' | t }}</h2>
+
+      @if (!isCheckedIn) {
+        <div class="empty-state card">
+          <p>{{ 'child.camerasWhenPresent' | t: { name: child()!.firstName } }}</p>
+        </div>
+      } @else if (!child()!.canViewCamera) {
+        <div class="empty-state card">
+          <p>{{ 'child.cameraNotAllowed' | t }}</p>
+        </div>
+      } @else if (cameras().length === 0) {
+        <div class="empty-state card">
+          <p>{{ 'child.noCameras' | t: { room: child()!.roomName || ('child.thisRoom' | t) } }}</p>
+        </div>
+      } @else {
+        <div class="camera-grid">
+          @for (camera of cameras(); track camera.id) {
+            <div class="camera-card card">
+              <div class="camera-thumb">
+                <span class="camera-icon">&#128247;</span>
+              </div>
+              <div class="camera-info">
+                <h3>{{ camera.name }}</h3>
+                <p class="camera-location">{{ camera.location || ('child.locationUnset' | t) }}</p>
+                <span
+                  class="badge"
+                  [class.badge-success]="camera.isAvailable"
+                  [class.badge-warning]="!camera.isAvailable"
+                >
+                  {{ camera.isAvailable ? ('common.available' | t) : camera.status }}
+                </span>
+              </div>
+              <button
+                class="btn btn-primary"
+                type="button"
+                [disabled]="!camera.isAvailable"
+                (click)="startViewing(camera)"
+              >
+                {{ 'child.viewLive' | t }}
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  }
+</div>

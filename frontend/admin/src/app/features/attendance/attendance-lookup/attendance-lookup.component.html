@@ -1,0 +1,81 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>{{ 'attendance.title' | t }}</h1>
+      <p>{{ 'attendance.subtitle' | t }}</p>
+    </div>
+  </div>
+
+  <form class="card lookup-form" [formGroup]="lookupForm" (ngSubmit)="lookup()">
+    <div class="inline-form">
+      <div class="form-field">
+        <label for="childId">{{ 'attendance.childId' | t }}</label>
+        <input
+          id="childId"
+          type="text"
+          formControlName="childId"
+          placeholder="00000000-0000-0000-0000-000000000000"
+        />
+      </div>
+      <button class="btn btn-primary" type="submit" [disabled]="isLoading()">
+        {{ isLoading() ? ('attendance.lookingUp' | t) : ('attendance.lookup' | t) }}
+      </button>
+    </div>
+    @if (errorMessage()) {
+      <p class="error-text">{{ errorMessage() }}</p>
+    }
+  </form>
+
+  @if (hasLookedUp()) {
+    <div class="card attendance-card">
+      <h2>{{ 'attendance.current' | t }}</h2>
+
+      @if (attendance()) {
+        <dl class="attendance-grid">
+          <div>
+            <dt>{{ 'common.status' | t }}</dt>
+            <dd>
+              <span class="badge" [class.badge-success]="isCheckedIn" [class.badge-neutral]="!isCheckedIn">
+                {{ isCheckedIn ? ('attendance.checkedIn' | t) : attendance()!.status }}
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt>{{ 'attendance.checkedIn' | t }}</dt>
+            <dd>{{ attendance()!.checkInUtc | date: 'short' }}</dd>
+          </div>
+          @if (attendance()!.checkOutUtc) {
+            <div>
+              <dt>{{ 'attendance.checkedOut' | t }}</dt>
+              <dd>{{ attendance()!.checkOutUtc | date: 'short' }}</dd>
+            </div>
+          }
+          <div>
+            <dt>{{ 'attendance.source' | t }}</dt>
+            <dd>{{ attendance()!.source }}</dd>
+          </div>
+        </dl>
+      } @else {
+        <p class="muted-text">{{ 'attendance.none' | t }}</p>
+      }
+
+      <div class="form-field notes-field">
+        <label for="notes">{{ 'attendance.notes' | t }}</label>
+        <input id="notes" type="text" [formControl]="notesControl" placeholder="Arrived with grandparent" />
+      </div>
+
+      <div class="action-row">
+        <button class="btn btn-primary" type="button" [disabled]="isActing() || isCheckedIn" (click)="checkIn()">
+          {{ isActing() ? ('attendance.working' | t) : ('attendance.checkIn' | t) }}
+        </button>
+        <button class="btn btn-danger" type="button" [disabled]="isActing() || !isCheckedIn" (click)="checkOut()">
+          {{ isActing() ? ('attendance.working' | t) : ('attendance.checkOut' | t) }}
+        </button>
+      </div>
+
+      @if (actionError()) {
+        <p class="error-text">{{ actionError() }}</p>
+      }
+    </div>
+  }
+</div>

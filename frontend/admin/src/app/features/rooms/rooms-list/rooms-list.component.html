@@ -1,0 +1,77 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>{{ 'rooms.title' | t }}</h1>
+      <p>{{ 'rooms.subtitle' | t }}</p>
+    </div>
+    <button class="btn btn-primary" type="button" (click)="toggleForm()">
+      {{ showForm() ? ('common.cancel' | t) : ('rooms.new' | t) }}
+    </button>
+  </div>
+
+  @if (showForm()) {
+    <form class="card new-room-form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="inline-form">
+        <div class="form-field">
+          <label for="nurseryId">{{ 'rooms.nurseryId' | t }}</label>
+          <input id="nurseryId" type="text" formControlName="nurseryId" placeholder="00000000-0000-0000-0000-000000000000" />
+        </div>
+        <div class="form-field">
+          <label for="name">{{ 'common.name' | t }}</label>
+          <input id="name" type="text" formControlName="name" placeholder="Caterpillar Room" />
+        </div>
+        <div class="form-field">
+          <label for="code">{{ 'rooms.code' | t }}</label>
+          <input id="code" type="text" formControlName="code" placeholder="ROOM-2" />
+        </div>
+        <div class="form-field">
+          <label for="roomType">{{ 'rooms.type' | t }}</label>
+          <input id="roomType" type="text" formControlName="roomType" placeholder="Toddler" />
+        </div>
+        <button class="btn btn-primary" type="submit" [disabled]="isSubmitting()">
+          {{ isSubmitting() ? ('rooms.creating' | t) : ('rooms.create' | t) }}
+        </button>
+      </div>
+      @if (formError()) {
+        <p class="error-text">{{ formError() }}</p>
+      }
+    </form>
+  }
+
+  @if (isLoading()) {
+    <p class="loading-text">{{ 'rooms.loading' | t }}</p>
+  } @else if (errorMessage()) {
+    <p class="error-text">{{ errorMessage() }}</p>
+  } @else if (rooms().length === 0) {
+    <div class="empty-state card">
+      <p>{{ 'rooms.empty' | t }}</p>
+    </div>
+  } @else {
+    <div class="card table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'common.name' | t }}</th>
+            <th>{{ 'rooms.code' | t }}</th>
+            <th>{{ 'rooms.typeCol' | t }}</th>
+            <th>{{ 'common.status' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (room of rooms(); track room.id) {
+            <tr>
+              <td>{{ room.name }}</td>
+              <td>{{ room.code }}</td>
+              <td>{{ room.roomType || '—' }}</td>
+              <td>
+                <span class="badge" [class.badge-success]="room.isActive" [class.badge-neutral]="!room.isActive">
+                  {{ room.isActive ? ('common.active' | t) : ('common.inactive' | t) }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

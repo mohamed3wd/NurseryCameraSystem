@@ -1,0 +1,15 @@
+# go2rtc — private RTSP→WebRTC engine. Not exposed on the public network.
+# Browsers talk only to NurseryCamera.MediaGateway, which authenticates stream tokens
+# against the API before negotiating WebRTC here.
+
+api:
+  listen: ":1984"
+  origin: "*"
+
+webrtc:
+  candidates:
+    - stun:8555
+
+# Demo pattern used when a camera has no reachable RTSP (seeded placeholder IPs).
+streams:
+  nursery_demo: ffmpeg:testsrc=size=1280x720:rate=15#video=h264#hardware=false

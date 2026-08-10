@@ -1,0 +1,25 @@
+<ng-container *ngIf="authService.isAuthenticated()">
+  <header class="app-header">
+    <a class="brand" routerLink="/rooms">
+      <span class="brand-mark">NC</span>
+      <span class="brand-name">{{ 'app.brand' | t }} <span class="brand-suffix">{{ 'app.admin' | t }}</span></span>
+    </a>
+
+    <nav class="app-nav">
+      <a routerLink="/rooms" routerLinkActive="active">{{ 'nav.rooms' | t }}</a>
+      <a routerLink="/cameras" routerLinkActive="active">{{ 'nav.cameras' | t }}</a>
+      <a routerLink="/attendance" routerLinkActive="active">{{ 'nav.attendance' | t }}</a>
+      <a routerLink="/audit-logs" routerLinkActive="active">{{ 'nav.audit' | t }}</a>
+    </nav>
+
+    <div class="header-actions">
+      <app-lang-switcher />
+      <span class="user-name">{{ authService.currentUser()?.fullName }}</span>
+      <button class="btn btn-secondary" type="button" (click)="logout()">{{ 'common.signOut' | t }}</button>
+    </div>
+  </header>
+</ng-container>
+
+<main>
+  <router-outlet></router-outlet>
+</main>

@@ -1,0 +1,116 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>{{ 'cameras.title' | t }}</h1>
+      <p>{{ 'cameras.subtitle' | t }}</p>
+    </div>
+    <button class="btn btn-primary" type="button" (click)="toggleForm()">
+      {{ showForm() ? ('common.cancel' | t) : ('cameras.new' | t) }}
+    </button>
+  </div>
+
+  @if (showForm()) {
+    <form class="card new-camera-form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="inline-form">
+        <div class="form-field">
+          <label for="nurseryId">{{ 'cameras.nurseryId' | t }}</label>
+          <input id="nurseryId" type="text" formControlName="nurseryId" placeholder="00000000-0000-0000-0000-000000000000" />
+        </div>
+        <div class="form-field">
+          <label for="name">{{ 'common.name' | t }}</label>
+          <input id="name" type="text" formControlName="name" placeholder="Caterpillar Room Camera 2" />
+        </div>
+        <div class="form-field">
+          <label for="location">{{ 'cameras.location' | t }}</label>
+          <input id="location" type="text" formControlName="location" placeholder="Ceiling - South Corner" />
+        </div>
+      </div>
+      <div class="inline-form">
+        <div class="form-field">
+          <label for="rtspUrl">{{ 'cameras.rtsp' | t }}</label>
+          <input id="rtspUrl" type="text" formControlName="rtspUrl" placeholder="rtsp://192.0.2.11:554/stream" />
+        </div>
+        <div class="form-field">
+          <label for="username">{{ 'cameras.username' | t }}</label>
+          <input id="username" type="text" formControlName="username" placeholder="camera-user" />
+        </div>
+        <div class="form-field">
+          <label for="password">{{ 'cameras.password' | t }}</label>
+          <input id="password" type="password" formControlName="password" placeholder="••••••••" />
+        </div>
+        <div class="form-field">
+          <label for="streamProfile">{{ 'cameras.profile' | t }}</label>
+          <input id="streamProfile" type="text" formControlName="streamProfile" placeholder="main" />
+        </div>
+        <button class="btn btn-primary" type="submit" [disabled]="isSubmitting()">
+          {{ isSubmitting() ? ('cameras.creating' | t) : ('cameras.create' | t) }}
+        </button>
+      </div>
+      @if (formError()) {
+        <p class="error-text">{{ formError() }}</p>
+      }
+    </form>
+  }
+
+  @if (isLoading()) {
+    <p class="loading-text">{{ 'cameras.loading' | t }}</p>
+  } @else if (errorMessage()) {
+    <p class="error-text">{{ errorMessage() }}</p>
+  } @else if (cameras().length === 0) {
+    <div class="empty-state card">
+      <p>{{ 'cameras.empty' | t }}</p>
+    </div>
+  } @else {
+    <div class="card table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'common.name' | t }}</th>
+            <th>{{ 'cameras.location' | t }}</th>
+            <th>{{ 'common.status' | t }}</th>
+            <th>{{ 'cameras.profile' | t }}</th>
+            <th>{{ 'cameras.lastHealth' | t }}</th>
+            <th>{{ 'cameras.activeCol' | t }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (camera of cameras(); track camera.id) {
+            <tr>
+              <td>{{ camera.name }}</td>
+              <td>{{ camera.location || '—' }}</td>
+              <td>
+                <span
+                  class="badge"
+                  [class.badge-success]="camera.status === 'ACTIVE'"
+                  [class.badge-warning]="camera.status === 'OFFLINE' || camera.status === 'MAINTENANCE'"
+                  [class.badge-danger]="camera.status === 'ERROR'"
+                  [class.badge-neutral]="camera.status === 'INACTIVE'"
+                >
+                  {{ camera.status }}
+                </span>
+              </td>
+              <td>{{ camera.streamProfile || '—' }}</td>
+              <td>{{ camera.lastHealthCheckUtc ? (camera.lastHealthCheckUtc | date: 'short') : ('cameras.never' | t) }}</td>
+              <td>
+                <span class="badge" [class.badge-success]="camera.isActive" [class.badge-neutral]="!camera.isActive">
+                  {{ camera.isActive ? ('common.active' | t) : ('common.inactive' | t) }}
+                </span>
+              </td>
+              <td>
+                <button
+                  class="btn btn-secondary btn-sm"
+                  type="button"
+                  [disabled]="togglingId() === camera.id"
+                  (click)="toggleActive(camera)"
+                >
+                  {{ camera.isActive ? ('cameras.disable' | t) : ('cameras.enable' | t) }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

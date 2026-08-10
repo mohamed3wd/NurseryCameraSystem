@@ -1,0 +1,15 @@
+<header class="app-header" *ngIf="authService.isAuthenticated()">
+  <a class="brand" routerLink="/children">
+    <span class="brand-mark">NC</span>
+    <span class="brand-name">{{ 'app.brand' | t }}</span>
+  </a>
+  <div class="header-actions">
+    <app-lang-switcher />
+    <span class="user-name">{{ authService.currentUser()?.fullName }}</span>
+    <button class="btn btn-secondary" type="button" (click)="logout()">{{ 'common.signOut' | t }}</button>
+  </div>
+</header>
+
+<main>
+  <router-outlet></router-outlet>
+</main>

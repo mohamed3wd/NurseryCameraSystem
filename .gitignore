@@ -1,0 +1,63 @@
+# ---- Environment / secrets -------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# ---- .NET -------------------------------------------------------------------
+bin/
+obj/
+out/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+*.pdb
+*.dll
+*.exe
+appsettings.*.local.json
+
+# EF Core
+*.efmigrationslock
+
+# ---- Angular / Node ---------------------------------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist/
+tmp/
+out-tsc/
+.angular/
+.sass-cache/
+connect.lock
+coverage/
+libpeerconnection.log
+typings/
+.npm
+.eslintcache
+*.tsbuildinfo
+
+# Angular CLI
+/.angular/cache
+
+# ---- Docker / containers -----------------------------------------------------
+*.pid
+
+# ---- IDE / editors ------------------------------------------------------------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+
+# ---- OS ------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+
+# ---- Logs -----------------------------------------------------------------------
+*.log
+logs/

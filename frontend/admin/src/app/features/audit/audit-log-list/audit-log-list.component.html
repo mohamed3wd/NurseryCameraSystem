@@ -1,0 +1,80 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>{{ 'audit.title' | t }}</h1>
+      <p>{{ 'audit.subtitle' | t }}</p>
+    </div>
+  </div>
+
+  <form class="card filter-form" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+    <div class="inline-form">
+      <div class="form-field">
+        <label for="action">{{ 'audit.action' | t }}</label>
+        <input id="action" type="text" formControlName="action" placeholder="e.g. ChildCheckedIn" />
+      </div>
+      <div class="form-field">
+        <label for="userId">{{ 'audit.userId' | t }}</label>
+        <input id="userId" type="text" formControlName="userId" placeholder="00000000-0000-0000-0000-000000000000" />
+      </div>
+      <button class="btn btn-secondary" type="submit">{{ 'audit.filter' | t }}</button>
+    </div>
+  </form>
+
+  @if (isLoading()) {
+    <p class="loading-text">{{ 'audit.loading' | t }}</p>
+  } @else if (errorMessage()) {
+    <p class="error-text">{{ errorMessage() }}</p>
+  } @else if (logs().length === 0) {
+    <div class="empty-state card">
+      <p>{{ 'audit.empty' | t }}</p>
+    </div>
+  } @else {
+    <div class="card table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'audit.when' | t }}</th>
+            <th>{{ 'audit.action' | t }}</th>
+            <th>{{ 'audit.entity' | t }}</th>
+            <th>{{ 'audit.result' | t }}</th>
+            <th>{{ 'audit.user' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (log of logs(); track log.id) {
+            <tr>
+              <td>{{ log.createdAtUtc | date: 'short' }}</td>
+              <td>{{ log.action }}</td>
+              <td>{{ log.entityType }}{{ log.entityId ? ' #' + log.entityId : '' }}</td>
+              <td>
+                <span
+                  class="badge"
+                  [class.badge-success]="log.result === 'Success'"
+                  [class.badge-danger]="log.result !== 'Success'"
+                >
+                  {{ log.result }}
+                </span>
+              </td>
+              <td>{{ log.userId || ('audit.system' | t) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <button class="btn btn-secondary btn-sm" type="button" [disabled]="page() <= 1" (click)="goToPage(page() - 1)">
+        {{ 'audit.prev' | t }}
+      </button>
+      <span class="page-indicator">{{ 'audit.page' | t: { page: page(), total: totalPages } }}</span>
+      <button
+        class="btn btn-secondary btn-sm"
+        type="button"
+        [disabled]="page() >= totalPages"
+        (click)="goToPage(page() + 1)"
+      >
+        {{ 'audit.next' | t }}
+      </button>
+    </div>
+  }
+</div>
