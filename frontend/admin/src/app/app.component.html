@@ -1,4 +1,4 @@
-<ng-container *ngIf="authService.isAuthenticated()">
+@if (authService.isAuthenticated()) {
   <header class="app-header">
     <a class="brand" routerLink="/rooms">
       <span class="brand-mark">NC</span>
@@ -18,7 +18,7 @@
       <button class="btn btn-secondary" type="button" (click)="logout()">{{ 'common.signOut' | t }}</button>
     </div>
   </header>
-</ng-container>
+}
 
 <main>
   <router-outlet></router-outlet>

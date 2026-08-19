@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { RoomsService } from '../../../core/services/rooms.service';
@@ -10,7 +10,8 @@ import { RoomDto } from '../../../core/models/room.models';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './rooms-list.component.html',
-  styleUrl: './rooms-list.component.scss'
+  styleUrl: './rooms-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RoomsListComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);

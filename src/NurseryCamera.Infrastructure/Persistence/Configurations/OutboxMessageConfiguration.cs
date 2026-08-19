@@ -23,7 +23,9 @@ public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outbox
         builder.Property(o => o.Error)
             .HasColumnType("nvarchar(max)");
 
-        // Used by OutboxWorker to poll unprocessed messages in order (spec section 33).
-        builder.HasIndex(o => new { o.ProcessedAtUtc, o.OccurredAtUtc });
+        // Used by OutboxWorker to poll unprocessed messages in order (spec section 33). Filtered
+        // to the pending backlog, which stays small while the processed history grows unbounded.
+        builder.HasIndex(o => o.OccurredAtUtc)
+            .HasFilter("[ProcessedAtUtc] IS NULL");
     }
 }

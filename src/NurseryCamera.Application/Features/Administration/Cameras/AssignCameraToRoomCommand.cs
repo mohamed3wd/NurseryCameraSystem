@@ -69,8 +69,6 @@ public sealed class AssignCameraToRoomCommandHandler : IRequestHandler<AssignCam
             });
         }
 
-        await _db.SaveChangesAsync(cancellationToken);
-
         await _auditService.LogAsync(
             new AuditEvent(_currentUser.UserId, "CAMERA_ASSIGNMENT_CHANGED", "Camera", request.CameraId.ToString(), "SUCCESS",
                 Metadata: new { request.RoomId, Action = "ASSIGNED" }),

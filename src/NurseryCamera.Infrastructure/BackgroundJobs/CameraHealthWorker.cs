@@ -61,19 +61,23 @@ public sealed class CameraHealthWorker : BackgroundService
 
         var now = clock.UtcNow;
 
+        // Projected rather than materialized as entities: this runs on a timer forever and the
+        // Camera row carries the encrypted RTSP URL and credentials, which the probe never needs.
         var cameras = await dbContext.Cameras
+            .AsNoTracking()
             .Where(c => c.IsActive && c.Status != CameraStatus.MAINTENANCE && c.Status != CameraStatus.INACTIVE)
+            .Select(c => new { c.Id, c.Status })
             .ToListAsync(cancellationToken);
+
+        if (cameras.Count == 0)
+        {
+            return;
+        }
 
         foreach (var camera in cameras)
         {
-            var previousStatus = camera.Status;
-
             // MVP mock: no real RTSP probe. A future gateway implementation would ping
             // the camera/media gateway here instead of assuming success.
-            camera.Status = CameraStatus.ACTIVE;
-            camera.LastHealthCheckUtc = now;
-
             dbContext.CameraHealthChecks.Add(new CameraHealthCheck
             {
                 Id = Guid.NewGuid(),
@@ -83,18 +87,23 @@ public sealed class CameraHealthWorker : BackgroundService
                 LatencyMs = 0
             });
 
-            if (previousStatus != camera.Status)
+            if (camera.Status != CameraStatus.ACTIVE)
             {
                 await notificationService.NotifyCameraStatusChangedAsync(
                     camera.Id,
-                    camera.Status.ToString(),
+                    CameraStatus.ACTIVE.ToString(),
                     cancellationToken);
             }
         }
 
-        if (cameras.Count > 0)
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
+        await dbContext.Cameras
+            .Where(c => c.IsActive && c.Status != CameraStatus.MAINTENANCE && c.Status != CameraStatus.INACTIVE)
+            .ExecuteUpdateAsync(
+                setters => setters
+                    .SetProperty(c => c.Status, CameraStatus.ACTIVE)
+                    .SetProperty(c => c.LastHealthCheckUtc, now),
+                cancellationToken);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

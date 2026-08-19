@@ -51,5 +51,9 @@ public sealed class ViewingSessionConfiguration : IEntityTypeConfiguration<Viewi
         builder.HasIndex(v => new { v.ChildId, v.Status });
         builder.HasIndex(v => new { v.CameraId, v.Status });
         builder.HasIndex(v => v.ExpiresAtUtc);
+
+        // ViewingSessionExpirationWorker polls "ACTIVE and past ExpiresAtUtc" every few seconds;
+        // neither single-column index alone lets that become a seek.
+        builder.HasIndex(v => new { v.Status, v.ExpiresAtUtc });
     }
 }

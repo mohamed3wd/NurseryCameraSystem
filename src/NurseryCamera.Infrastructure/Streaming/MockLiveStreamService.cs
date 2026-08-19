@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using NurseryCamera.Application.Abstractions.Persistence;
 using NurseryCamera.Application.Abstractions.Security;
 using NurseryCamera.Application.Abstractions.Streaming;
+using NurseryCamera.Application.Abstractions.Time;
 using NurseryCamera.Domain.Enums;
 
 namespace NurseryCamera.Infrastructure.Streaming;
@@ -18,23 +19,27 @@ public sealed class MockLiveStreamService : ILiveStreamService
     private readonly IAppDbContext _dbContext;
     private readonly ISecretEncryptionService _encryptionService;
     private readonly ITokenHashService _tokenHashService;
+    private readonly IClock _clock;
     private readonly ILogger<MockLiveStreamService> _logger;
 
     public MockLiveStreamService(
         IAppDbContext dbContext,
         ISecretEncryptionService encryptionService,
         ITokenHashService tokenHashService,
+        IClock clock,
         ILogger<MockLiveStreamService> logger)
     {
         _dbContext = dbContext;
         _encryptionService = encryptionService;
         _tokenHashService = tokenHashService;
+        _clock = clock;
         _logger = logger;
     }
 
     public async Task<StartStreamResult> StartAsync(StartStreamRequest request, CancellationToken cancellationToken)
     {
         var camera = await _dbContext.Cameras
+            .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == request.CameraId, cancellationToken);
 
         if (camera is null || !camera.IsActive || camera.Status != CameraStatus.ACTIVE)
@@ -96,53 +101,11 @@ public sealed class MockLiveStreamService : ILiveStreamService
 
     public async Task<StreamAuthorizationResult> AuthorizeAsync(StreamAuthorizationRequest request, CancellationToken cancellationToken)
     {
-        // Full token-design validation chain (spec section 14): token exists, hash matches,
-        // not revoked, not expired, session ACTIVE, attendance PRESENT, camera ACTIVE.
         var tokenHash = _tokenHashService.Hash(request.RawStreamToken);
 
-        var token = await _dbContext.StreamTokens
-            .Include(t => t.ViewingSession)
-                .ThenInclude(v => v.AttendanceSession)
-            .Include(t => t.ViewingSession)
-                .ThenInclude(v => v.Camera)
-            .FirstOrDefaultAsync(
-                t => t.ViewingSessionId == request.ViewingSessionId && t.TokenHash == tokenHash,
-                cancellationToken);
+        var facts = await StreamTokenAuthorizer.LoadFactsAsync(
+            _dbContext, request.ViewingSessionId, tokenHash, cancellationToken);
 
-        if (token is null)
-        {
-            return Deny("STREAM_TOKEN_NOT_FOUND", "Stream token is invalid.");
-        }
-
-        if (token.Status == StreamTokenStatus.REVOKED)
-        {
-            return Deny("VIEWING_SESSION_REVOKED", "Stream token has been revoked.");
-        }
-
-        if (token.Status != StreamTokenStatus.ACTIVE || token.ExpiresAtUtc <= DateTime.UtcNow)
-        {
-            return Deny("VIEWING_SESSION_EXPIRED", "Stream token has expired.");
-        }
-
-        var session = token.ViewingSession;
-        if (session.Status != ViewingSessionStatus.ACTIVE)
-        {
-            return Deny("VIEWING_SESSION_NOT_FOUND", "Viewing session is not active.");
-        }
-
-        if (session.AttendanceSession.Status != AttendanceStatus.PRESENT)
-        {
-            return Deny("CHILD_NOT_PRESENT", "Child is not currently present.");
-        }
-
-        if (!session.Camera.IsActive || session.Camera.Status != CameraStatus.ACTIVE)
-        {
-            return Deny("CAMERA_NOT_AVAILABLE", "Camera is not available.");
-        }
-
-        return new StreamAuthorizationResult(Authorized: true);
+        return StreamTokenAuthorizer.Evaluate(facts, _clock.UtcNow);
     }
-
-    private static StreamAuthorizationResult Deny(string code, string message)
-        => new(Authorized: false, DenialCode: code, DenialMessage: message);
 }

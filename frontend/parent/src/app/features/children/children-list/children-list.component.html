@@ -12,9 +12,10 @@
     </div>
   } @else {
     <div class="child-grid">
-      @for (child of children(); track child.id) {
+      @for (card of cards(); track card.child.id) {
+        @let child = card.child;
         <a class="child-card card" [routerLink]="['/children', child.id]">
-          <div class="child-avatar">{{ initials(child) }}</div>
+          <div class="child-avatar">{{ card.initials }}</div>
           <div class="child-info">
             <h3>{{ child.firstName }} {{ child.lastName }}</h3>
             <p class="child-room">{{ child.roomName || ('children.noRoom' | t) }}</p>

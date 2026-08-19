@@ -26,5 +26,9 @@ public sealed class CameraHealthCheckConfiguration : IEntityTypeConfiguration<Ca
 
         // Spec section 30: CameraHealthChecks.CameraId + CheckedAtUtc
         builder.HasIndex(h => new { h.CameraId, h.CheckedAtUtc });
+
+        // Retention pruning deletes by age across all cameras, which the composite index above
+        // cannot seek on.
+        builder.HasIndex(h => h.CheckedAtUtc);
     }
 }

@@ -1,7 +1,9 @@
+using System.IO.Compression;
 using System.Text.Json;
 using AspNetCoreRateLimit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi;
 using NurseryCamera.Api;
@@ -21,6 +23,19 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
+
+// JSON list responses (children, cameras, audit pages) compress extremely well and the parent
+// app is expected to run on mobile networks. HTTPS-only compression of JSON is safe here because
+// no secret is ever reflected back from a request body into a response.
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] { "application/json" });
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
+builder.Services.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -65,6 +80,8 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddNurseryCameraAuthorization();
 
+var apiErrorSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
 // Keep unauthenticated/forbidden responses in the same ApiError envelope as every other
 // error (spec section 26), rather than the bare empty 401/403 ASP.NET Core returns by default.
 builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
@@ -83,7 +100,7 @@ builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSch
             "FORBIDDEN", "You are not authorized to perform this action.");
 });
 
-static Task WriteApiErrorAsync(HttpContext httpContext, int statusCode, string code, string message)
+Task WriteApiErrorAsync(HttpContext httpContext, int statusCode, string code, string message)
 {
     httpContext.Response.StatusCode = statusCode;
     httpContext.Response.ContentType = "application/json";
@@ -92,9 +109,7 @@ static Task WriteApiErrorAsync(HttpContext httpContext, int statusCode, string c
         ? correlationId
         : httpContext.TraceIdentifier;
 
-    var json = JsonSerializer.Serialize(
-        new ApiError(code, message, traceId),
-        new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    var json = JsonSerializer.Serialize(new ApiError(code, message, traceId), apiErrorSerializerOptions);
 
     return httpContext.Response.WriteAsync(json);
 }
@@ -142,6 +157,8 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
+
+app.UseResponseCompression();
 
 app.UseHttpsRedirection();
 

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { AuditService } from '../../../core/services/audit.service';
@@ -10,7 +10,8 @@ import { AuditLogDto } from '../../../core/models/audit.models';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './audit-log-list.component.html',
-  styleUrl: './audit-log-list.component.scss'
+  styleUrl: './audit-log-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AuditLogListComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
@@ -33,9 +34,7 @@ export class AuditLogListComponent implements OnInit {
     this.load();
   }
 
-  get totalPages(): number {
-    return Math.max(1, Math.ceil(this.totalCount() / this.pageSize));
-  }
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalCount() / this.pageSize)));
 
   applyFilters(): void {
     this.page.set(1);
@@ -43,7 +42,7 @@ export class AuditLogListComponent implements OnInit {
   }
 
   goToPage(page: number): void {
-    if (page < 1 || page > this.totalPages) {
+    if (page < 1 || page > this.totalPages()) {
       return;
     }
     this.page.set(page);

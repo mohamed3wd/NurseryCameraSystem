@@ -93,7 +93,6 @@ public sealed class CheckInChildCommandHandler : IRequestHandler<CheckInChildCom
         };
 
         _db.AttendanceSessions.Add(attendance);
-        await _db.SaveChangesAsync(cancellationToken);
 
         await _auditService.LogAsync(
             new AuditEvent(userId, "CHILD_CHECK_IN", "AttendanceSession", attendance.Id.ToString(), "SUCCESS",

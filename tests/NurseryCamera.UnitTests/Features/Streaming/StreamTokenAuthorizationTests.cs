@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NurseryCamera.Application.Abstractions.Security;
 using NurseryCamera.Application.Abstractions.Streaming;
+using NurseryCamera.Application.Abstractions.Time;
 using NurseryCamera.Domain.Entities;
 using NurseryCamera.Domain.Enums;
 using NurseryCamera.Infrastructure.Security;
@@ -32,7 +33,7 @@ public sealed class StreamTokenAuthorizationTests
     public async Task AuthorizeAsync_Denies_ExpiredToken()
     {
         var (service, rawToken, sessionId, db, token) = await CreateAuthorizedStreamFullAsync();
-        token.ExpiresAtUtc = DateTime.UtcNow.AddMinutes(-1);
+        token.ExpiresAtUtc = _utcNow.AddMinutes(-1);
         await db.SaveChangesAsync();
 
         var result = await service.AuthorizeAsync(
@@ -145,10 +146,14 @@ public sealed class StreamTokenAuthorizationTests
         var encryption = new Mock<ISecretEncryptionService>();
         encryption.Setup(e => e.Decrypt(It.IsAny<string>())).Returns("rtsp://192.0.2.10/demo");
 
+        var clock = new Mock<IClock>();
+        clock.Setup(c => c.UtcNow).Returns(_utcNow);
+
         var service = new MockLiveStreamService(
             db,
             encryption.Object,
             _hashService,
+            clock.Object,
             NullLogger<MockLiveStreamService>.Instance);
 
         return (service, rawToken, sessionId, db, token);

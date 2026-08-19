@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { I18nService } from '../../../core/i18n/i18n.service';
@@ -16,7 +16,8 @@ import { ChildDto } from '../../../core/models/child.models';
   standalone: true,
   imports: [CommonModule, RouterLink, TranslatePipe],
   templateUrl: './child-detail.component.html',
-  styleUrl: './child-detail.component.scss'
+  styleUrl: './child-detail.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ChildDetailComponent implements OnInit {
   private readonly i18n = inject(I18nService);
@@ -37,13 +38,8 @@ export class ChildDetailComponent implements OnInit {
     private readonly camerasService: CamerasService
   ) {}
 
-  get isCheckedIn(): boolean {
-    return this.attendance()?.status === 'PRESENT';
-  }
-
-  get canShowCameras(): boolean {
-    return this.isCheckedIn && !!this.child()?.canViewCamera;
-  }
+  readonly isCheckedIn = computed(() => this.attendance()?.status === 'PRESENT');
+  readonly canShowCameras = computed(() => this.isCheckedIn() && !!this.child()?.canViewCamera);
 
   ngOnInit(): void {
     this.childId = this.route.snapshot.paramMap.get('childId') ?? '';

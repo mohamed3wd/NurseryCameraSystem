@@ -15,6 +15,11 @@ namespace NurseryCamera.Api.Middleware;
 /// </summary>
 public sealed class ExceptionHandlingMiddleware
 {
+    private static readonly JsonSerializerOptions ErrorSerializerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
 
@@ -74,10 +79,7 @@ public sealed class ExceptionHandlingMiddleware
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
 
-        var json = JsonSerializer.Serialize(error, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
+        var json = JsonSerializer.Serialize(error, ErrorSerializerOptions);
 
         return context.Response.WriteAsync(json);
     }

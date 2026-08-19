@@ -87,12 +87,18 @@ public sealed class DisableCameraCommandHandler : IRequestHandler<DisableCameraC
             token.RevokedAtUtc = now;
         }
 
-        await _db.SaveChangesAsync(cancellationToken);
-
         await _auditService.LogAsync(
             new AuditEvent(_currentUser.UserId, "CAMERA_DISABLED", "Camera", camera.Id.ToString(), "SUCCESS",
                 Metadata: new { RevokedSessions = sessionIds.Count }),
             cancellationToken);
+
+        var revokedParentIds = activeSessions.Select(s => s.ParentId).Distinct().ToList();
+        var userIdByParentId = revokedParentIds.Count == 0
+            ? new Dictionary<Guid, Guid>()
+            : await _db.Parents
+                .AsNoTracking()
+                .Where(p => revokedParentIds.Contains(p.Id))
+                .ToDictionaryAsync(p => p.Id, p => p.UserId, cancellationToken);
 
         foreach (var session in activeSessions)
         {
@@ -105,13 +111,7 @@ public sealed class DisableCameraCommandHandler : IRequestHandler<DisableCameraC
                 _logger.LogWarning(ex, "Failed to stop media gateway session for viewing session {ViewingSessionId}", session.Id);
             }
 
-            var parentUserId = await _db.Parents
-                .AsNoTracking()
-                .Where(p => p.Id == session.ParentId)
-                .Select(p => p.UserId)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (parentUserId != Guid.Empty)
+            if (userIdByParentId.TryGetValue(session.ParentId, out var parentUserId) && parentUserId != Guid.Empty)
             {
                 await _notificationService.NotifyViewingSessionRevokedAsync(session.Id, parentUserId, "ADMIN_REVOKED", cancellationToken);
             }

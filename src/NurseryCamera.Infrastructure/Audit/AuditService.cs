@@ -8,9 +8,14 @@ using NurseryCamera.Infrastructure.Persistence;
 namespace NurseryCamera.Infrastructure.Audit;
 
 /// <summary>
-/// Persists audit log records (spec section 25) and, for security-sensitive action types,
-/// also writes a SecurityEvent so denial/anomaly monitoring doesn't require scanning the
-/// full audit trail. Never persists raw passwords, camera credentials, or raw stream tokens.
+/// Stages audit log records (spec section 25) and, for security-sensitive action types,
+/// also a SecurityEvent so denial/anomaly monitoring doesn't require scanning the full audit
+/// trail. Never persists raw passwords, camera credentials, or raw stream tokens.
+///
+/// Rows are only added to the change tracker here. <c>UnitOfWorkBehavior</c> flushes them with
+/// the rest of the request, so a handler that writes several audit entries still costs a single
+/// database round trip. Callers outside the MediatR pipeline (background workers) must save
+/// their own scope's <c>DbContext</c> after logging.
 /// </summary>
 public sealed class AuditService : IAuditService
 {
@@ -34,7 +39,7 @@ public sealed class AuditService : IAuditService
         _clock = clock;
     }
 
-    public async Task LogAsync(AuditEvent auditEvent, CancellationToken cancellationToken = default)
+    public Task LogAsync(AuditEvent auditEvent, CancellationToken cancellationToken = default)
     {
         var now = _clock.UtcNow;
         var metadataJson = auditEvent.Metadata is null ? null : JsonSerializer.Serialize(auditEvent.Metadata);
@@ -66,6 +71,6 @@ public sealed class AuditService : IAuditService
             });
         }
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 }

@@ -63,9 +63,14 @@ public sealed class ViewingSessionExpirationWorker : BackgroundService
 
         var now = clock.UtcNow;
 
+        // Only the tokens that actually need revoking are fetched, and the pass is capped so a
+        // backlog is drained over several ticks instead of in one oversized query and write.
         var expiredSessions = await dbContext.ViewingSessions
             .Where(v => v.Status == ViewingSessionStatus.ACTIVE && v.ExpiresAtUtc <= now)
-            .Include(v => v.StreamTokens)
+            .OrderBy(v => v.ExpiresAtUtc)
+            .Take(Math.Max(1, _options.ViewingSessionExpirationBatchSize))
+            .Include(v => v.StreamTokens.Where(t => t.Status == StreamTokenStatus.ACTIVE))
+            .AsSplitQuery()
             .ToListAsync(cancellationToken);
 
         if (expiredSessions.Count == 0)
@@ -79,7 +84,7 @@ public sealed class ViewingSessionExpirationWorker : BackgroundService
             session.EndReason = ViewingEndReason.SESSION_EXPIRED;
             session.EndedAtUtc = now;
 
-            foreach (var token in session.StreamTokens.Where(t => t.Status == StreamTokenStatus.ACTIVE))
+            foreach (var token in session.StreamTokens)
             {
                 token.Status = StreamTokenStatus.EXPIRED;
                 token.RevokedAtUtc = now;
@@ -102,6 +107,7 @@ public sealed class ViewingSessionExpirationWorker : BackgroundService
                 Result: "SUCCESS"), cancellationToken);
         }
 
+        // Session state, token revocation, and every staged audit row commit together.
         await dbContext.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("Expired {Count} viewing session(s).", expiredSessions.Count);

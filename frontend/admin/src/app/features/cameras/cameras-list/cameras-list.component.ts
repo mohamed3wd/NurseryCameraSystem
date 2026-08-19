@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { CamerasService } from '../../../core/services/cameras.service';
@@ -10,7 +10,8 @@ import { CameraAdminDto } from '../../../core/models/camera.models';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './cameras-list.component.html',
-  styleUrl: './cameras-list.component.scss'
+  styleUrl: './cameras-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CamerasListComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);

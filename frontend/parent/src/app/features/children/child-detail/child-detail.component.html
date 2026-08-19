@@ -10,10 +10,10 @@
       <h1>{{ child()!.firstName }} {{ child()!.lastName }}</h1>
       <span
         class="badge"
-        [class.badge-success]="isCheckedIn"
-        [class.badge-neutral]="!isCheckedIn"
+        [class.badge-success]="isCheckedIn()"
+        [class.badge-neutral]="!isCheckedIn()"
       >
-        {{ isCheckedIn ? ('child.checkedIn' | t) : ('child.notCheckedIn' | t) }}
+        {{ isCheckedIn() ? ('child.checkedIn' | t) : ('child.notCheckedIn' | t) }}
       </span>
     </div>
     <p class="room-line">{{ child()!.roomName || ('children.noRoom' | t) }}</p>
@@ -45,7 +45,7 @@
     <section class="camera-section">
       <h2>{{ 'child.cameras' | t }}</h2>
 
-      @if (!isCheckedIn) {
+      @if (!isCheckedIn()) {
         <div class="empty-state card">
           <p>{{ 'child.camerasWhenPresent' | t: { name: child()!.firstName } }}</p>
         </div>

@@ -168,7 +168,6 @@ public sealed class StartViewingSessionCommandHandler : IRequestHandler<StartVie
             session.EndReason = ViewingEndReason.CAMERA_OFFLINE;
             streamToken.Status = StreamTokenStatus.REVOKED;
             streamToken.RevokedAtUtc = session.EndedAtUtc;
-            await _db.SaveChangesAsync(cancellationToken);
 
             await _auditService.LogAsync(
                 new AuditEvent(userId, "CAMERA_VIEW_DENIED", "ViewingSession", session.Id.ToString(), "FAILURE",
@@ -179,8 +178,9 @@ public sealed class StartViewingSessionCommandHandler : IRequestHandler<StartVie
         }
 
         session.Status = ViewingSessionStatus.ACTIVE;
-        await _db.SaveChangesAsync(cancellationToken);
 
+        // The terminal status plus all three audit records are flushed by UnitOfWorkBehavior
+        // in a single round trip once the handler returns.
         await _auditService.LogAsync(
             new AuditEvent(userId, "CAMERA_VIEW_AUTHORIZED", "ViewingSession", session.Id.ToString(), "SUCCESS"),
             cancellationToken);

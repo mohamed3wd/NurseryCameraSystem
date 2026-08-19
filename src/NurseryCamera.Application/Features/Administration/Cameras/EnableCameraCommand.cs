@@ -36,7 +36,6 @@ public sealed class EnableCameraCommandHandler : IRequestHandler<EnableCameraCom
 
         camera.IsActive = true;
         camera.Status = CameraStatus.ACTIVE;
-        await _db.SaveChangesAsync(cancellationToken);
 
         await _auditService.LogAsync(
             new AuditEvent(_currentUser.UserId, "CAMERA_ENABLED", "Camera", camera.Id.ToString(), "SUCCESS"),

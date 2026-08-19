@@ -13,8 +13,12 @@ const USER_KEY = 'nc_parent_user';
 export class AuthService {
   private readonly currentUserSignal = signal<UserDto | null>(this.readStoredUser());
 
+  // Mirrored in memory rather than read from localStorage per call: the interceptor asks for it
+  // on every single HTTP request, and as a signal it also makes isAuthenticated truly reactive.
+  private readonly accessTokenSignal = signal<string | null>(localStorage.getItem(ACCESS_TOKEN_KEY));
+
   readonly currentUser = computed(() => this.currentUserSignal());
-  readonly isAuthenticated = computed(() => !!this.currentUserSignal() && !!this.accessToken);
+  readonly isAuthenticated = computed(() => !!this.currentUserSignal() && !!this.accessTokenSignal());
 
   constructor(
     private readonly http: HttpClient,
@@ -22,7 +26,7 @@ export class AuthService {
   ) {}
 
   get accessToken(): string | null {
-    return localStorage.getItem(ACCESS_TOKEN_KEY);
+    return this.accessTokenSignal();
   }
 
   get refreshToken(): string | null {
@@ -47,6 +51,7 @@ export class AuthService {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    this.accessTokenSignal.set(null);
     this.currentUserSignal.set(null);
     this.router.navigateByUrl('/login');
   }
@@ -55,6 +60,7 @@ export class AuthService {
     localStorage.setItem(ACCESS_TOKEN_KEY, response.accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, response.refreshToken);
     localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+    this.accessTokenSignal.set(response.accessToken);
     this.currentUserSignal.set(response.user);
   }
 

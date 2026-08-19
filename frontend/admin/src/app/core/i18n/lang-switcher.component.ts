@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { I18nService } from './i18n.service';
 import { TranslatePipe } from './translate.pipe';
 
@@ -6,6 +6,7 @@ import { TranslatePipe } from './translate.pipe';
   selector: 'app-lang-switcher',
   standalone: true,
   imports: [TranslatePipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="lang-switcher" role="group" [attr.aria-label]="'Language'">
       <button

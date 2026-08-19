@@ -13,6 +13,7 @@ export interface WebRtcPlayRequest {
 @Injectable({ providedIn: 'root' })
 export class WebRtcPlayerService {
   private peerConnection: RTCPeerConnection | null = null;
+  private iceTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   async play(request: WebRtcPlayRequest): Promise<void> {
     this.stop();
@@ -55,6 +56,11 @@ export class WebRtcPlayerService {
   }
 
   stop(): void {
+    if (this.iceTimeoutId !== null) {
+      clearTimeout(this.iceTimeoutId);
+      this.iceTimeoutId = null;
+    }
+
     if (this.peerConnection) {
       this.peerConnection.getSenders().forEach((sender) => sender.track?.stop());
       this.peerConnection.getReceivers().forEach((receiver) => receiver.track?.stop());
@@ -69,18 +75,24 @@ export class WebRtcPlayerService {
     }
 
     return new Promise((resolve) => {
-      const check = () => {
-        if (pc.iceGatheringState === 'complete') {
-          pc.removeEventListener('icegatheringstatechange', check);
-          resolve();
+      const finish = () => {
+        if (this.iceTimeoutId !== null) {
+          clearTimeout(this.iceTimeoutId);
+          this.iceTimeoutId = null;
         }
-      };
-      pc.addEventListener('icegatheringstatechange', check);
-      // Fallback so slow ICE doesn't hang the UI forever.
-      setTimeout(() => {
         pc.removeEventListener('icegatheringstatechange', check);
         resolve();
-      }, 2000);
+      };
+
+      const check = () => {
+        if (pc.iceGatheringState === 'complete') {
+          finish();
+        }
+      };
+
+      pc.addEventListener('icegatheringstatechange', check);
+      // Fallback so slow ICE doesn't hang the UI forever.
+      this.iceTimeoutId = setTimeout(finish, 2000);
     });
   }
 }

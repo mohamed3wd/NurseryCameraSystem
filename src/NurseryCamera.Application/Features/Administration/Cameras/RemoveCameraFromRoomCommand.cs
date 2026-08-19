@@ -46,7 +46,6 @@ public sealed class RemoveCameraFromRoomCommandHandler : IRequestHandler<RemoveC
         }
 
         assignment.ValidToUtc = _clock.UtcNow;
-        await _db.SaveChangesAsync(cancellationToken);
 
         await _auditService.LogAsync(
             new AuditEvent(_currentUser.UserId, "CAMERA_ASSIGNMENT_CHANGED", "Camera", request.CameraId.ToString(), "SUCCESS",

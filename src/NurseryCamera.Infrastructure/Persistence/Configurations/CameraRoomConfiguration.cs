@@ -24,6 +24,9 @@ public sealed class CameraRoomConfiguration : IEntityTypeConfiguration<CameraRoo
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(cr => cr.CameraId);
-        builder.HasIndex(cr => cr.RoomId);
+
+        // "Which cameras currently cover this room" is the parent-facing camera list query;
+        // ValidToUtc is part of it because assignments are closed rather than deleted.
+        builder.HasIndex(cr => new { cr.RoomId, cr.ValidToUtc });
     }
 }

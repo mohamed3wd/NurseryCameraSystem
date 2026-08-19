@@ -49,7 +49,6 @@ public sealed class CreateRoomCommandHandler : IRequestHandler<CreateRoomCommand
         };
 
         _db.Rooms.Add(room);
-        await _db.SaveChangesAsync(cancellationToken);
 
         return new RoomDto(room.Id, room.NurseryId, room.Name, room.Code, room.RoomType, room.IsActive);
     }

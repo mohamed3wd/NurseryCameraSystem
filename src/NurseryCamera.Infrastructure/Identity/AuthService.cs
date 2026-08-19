@@ -22,6 +22,8 @@ namespace NurseryCamera.Infrastructure.Identity;
 /// </summary>
 public sealed class AuthService : IAuthService
 {
+    private static readonly JwtSecurityTokenHandler TokenHandler = new();
+
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ITokenHashService _tokenHashService;
     private readonly IClock _clock;
@@ -176,7 +178,7 @@ public sealed class AuthService : IAuthService
             expires: expiresAtUtc,
             signingCredentials: credentials);
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return TokenHandler.WriteToken(token);
     }
 
     private static string GenerateRawRefreshToken()

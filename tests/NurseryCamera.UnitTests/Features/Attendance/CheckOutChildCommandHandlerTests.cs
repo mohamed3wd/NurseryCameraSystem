@@ -7,7 +7,9 @@ using NurseryCamera.Application.Abstractions.Identity;
 using NurseryCamera.Application.Abstractions.Notifications;
 using NurseryCamera.Application.Abstractions.Streaming;
 using NurseryCamera.Application.Abstractions.Time;
+using NurseryCamera.Application.Behaviors;
 using NurseryCamera.Application.Features.Attendance.Commands;
+using NurseryCamera.Application.Features.Attendance.Dtos;
 using NurseryCamera.Domain.Entities;
 using NurseryCamera.Domain.Enums;
 using NurseryCamera.UnitTests.Helpers;
@@ -21,7 +23,8 @@ public sealed class CheckOutChildCommandHandlerTests
     [Fact]
     public async Task Handle_RevokesActiveViewingSessions_AndStreamTokens()
     {
-        await using var db = InMemoryDbFactory.Create();
+        var databaseName = Guid.NewGuid().ToString();
+        await using var db = InMemoryDbFactory.Create(databaseName);
         var seed = await CameraAccessSeed.CreateAuthorizedAsync(db, _utcNow);
 
         var activeSessionId = Guid.NewGuid();
@@ -137,33 +140,40 @@ public sealed class CheckOutChildCommandHandlerTests
             liveStream.Object,
             NullLogger<CheckOutChildCommandHandler>.Instance);
 
-        var result = await handler.Handle(new CheckOutChildCommand(seed.ChildId), CancellationToken.None);
+        // Run through the pipeline behavior, which is what actually commits in production now.
+        var command = new CheckOutChildCommand(seed.ChildId);
+        var result = await new UnitOfWorkBehavior<CheckOutChildCommand, AttendanceDto>(db)
+            .Handle(command, ct => handler.Handle(command, ct), CancellationToken.None);
 
         result.Status.Should().Be(AttendanceStatus.COMPLETED.ToString());
         result.CheckOutUtc.Should().Be(_utcNow);
 
-        var attendance = await db.AttendanceSessions.SingleAsync(a => a.Id == seed.AttendanceSessionId);
+        // Read through a separate context so the assertions see committed rows rather than the
+        // handler's still-tracked entity graph.
+        await using var db2 = InMemoryDbFactory.Create(databaseName);
+
+        var attendance = await db2.AttendanceSessions.SingleAsync(a => a.Id == seed.AttendanceSessionId);
         attendance.Status.Should().Be(AttendanceStatus.COMPLETED);
         attendance.CheckOutUtc.Should().Be(_utcNow);
 
-        var active = await db.ViewingSessions.SingleAsync(v => v.Id == activeSessionId);
+        var active = await db2.ViewingSessions.SingleAsync(v => v.Id == activeSessionId);
         active.Status.Should().Be(ViewingSessionStatus.ENDED);
         active.EndedAtUtc.Should().Be(_utcNow);
         active.EndReason.Should().Be(ViewingEndReason.CHILD_CHECKED_OUT);
 
-        var pending = await db.ViewingSessions.SingleAsync(v => v.Id == pendingSessionId);
+        var pending = await db2.ViewingSessions.SingleAsync(v => v.Id == pendingSessionId);
         pending.Status.Should().Be(ViewingSessionStatus.ENDED);
         pending.EndReason.Should().Be(ViewingEndReason.CHILD_CHECKED_OUT);
 
-        var previouslyEnded = await db.ViewingSessions.SingleAsync(v => v.Id == endedSessionId);
+        var previouslyEnded = await db2.ViewingSessions.SingleAsync(v => v.Id == endedSessionId);
         previouslyEnded.Status.Should().Be(ViewingSessionStatus.ENDED);
         previouslyEnded.EndReason.Should().Be(ViewingEndReason.PARENT_STOPPED);
 
-        var activeToken = await db.StreamTokens.SingleAsync(t => t.Id == activeTokenId);
+        var activeToken = await db2.StreamTokens.SingleAsync(t => t.Id == activeTokenId);
         activeToken.Status.Should().Be(StreamTokenStatus.REVOKED);
         activeToken.RevokedAtUtc.Should().Be(_utcNow);
 
-        var pendingToken = await db.StreamTokens.SingleAsync(t => t.Id == pendingTokenId);
+        var pendingToken = await db2.StreamTokens.SingleAsync(t => t.Id == pendingTokenId);
         pendingToken.Status.Should().Be(StreamTokenStatus.REVOKED);
         pendingToken.RevokedAtUtc.Should().Be(_utcNow);
 

@@ -29,6 +29,9 @@ public sealed class StreamTokenConfiguration : IEntityTypeConfiguration<StreamTo
         builder.HasIndex(t => t.ViewingSessionId);
         builder.HasIndex(t => t.ExpiresAtUtc);
 
+        // Matches TokenCleanupWorker's "ACTIVE and lapsed" sweep and its retention delete.
+        builder.HasIndex(t => new { t.Status, t.ExpiresAtUtc });
+
         // Raw tokens are never stored (spec section 14); the hash must be unique so
         // authorization lookups by hash are unambiguous.
         builder.HasIndex(t => t.TokenHash).IsUnique();

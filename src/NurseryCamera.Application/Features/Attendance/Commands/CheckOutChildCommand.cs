@@ -113,9 +113,8 @@ public sealed class CheckOutChildCommandHandler : IRequestHandler<CheckOutChildC
         }
 
         // A single SaveChangesAsync call persists attendance completion, viewing-session
-        // termination, and token revocation as one atomic database transaction (BR-009/BR-010).
-        await _db.SaveChangesAsync(cancellationToken);
-
+        // termination, token revocation, and the audit/outbox trail below as one atomic
+        // database transaction (BR-009/BR-010); UnitOfWorkBehavior issues it.
         await _auditService.LogAsync(
             new AuditEvent(userId, "CHILD_CHECK_OUT", "AttendanceSession", attendance.Id.ToString(), "SUCCESS",
                 Metadata: new { attendance.ChildId, RevokedSessions = sessionIds.Count }),
@@ -151,15 +150,19 @@ public sealed class CheckOutChildCommandHandler : IRequestHandler<CheckOutChildC
 
         await _notificationService.NotifyChildCheckedOutAsync(request.ChildId, parentUserIds, now, cancellationToken);
 
+        // One lookup for every revoked session's parent instead of a query per session: a child
+        // checked out during a busy viewing window can easily have several concurrent sessions.
+        var revokedParentIds = activeSessions.Select(s => s.ParentId).Distinct().ToList();
+        var userIdByParentId = revokedParentIds.Count == 0
+            ? new Dictionary<Guid, Guid>()
+            : await _db.Parents
+                .AsNoTracking()
+                .Where(p => revokedParentIds.Contains(p.Id))
+                .ToDictionaryAsync(p => p.Id, p => p.UserId, cancellationToken);
+
         foreach (var session in activeSessions)
         {
-            var parentUserId = await _db.Parents
-                .AsNoTracking()
-                .Where(p => p.Id == session.ParentId)
-                .Select(p => p.UserId)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (parentUserId != Guid.Empty)
+            if (userIdByParentId.TryGetValue(session.ParentId, out var parentUserId) && parentUserId != Guid.Empty)
             {
                 await _notificationService.NotifyViewingSessionRevokedAsync(session.Id, parentUserId, "CHILD_CHECKED_OUT", cancellationToken);
             }

@@ -27,71 +27,81 @@ public sealed class CameraAccessPolicy : ICameraAccessPolicy
     {
         var now = _clock.UtcNow;
 
-        var parent = await _db.Parents
+        // Everything the parent/child/attendance half of the algorithm needs, projected into a
+        // single round trip. This runs on the critical path of every start-view request, and the
+        // step-by-step version issued four sequential queries before it could reach step 5.
+        var context = await _db.Parents
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+            .Where(p => p.UserId == userId)
+            .Select(p => new
+            {
+                ParentId = p.Id,
+                ParentStatus = p.Status,
+                Relation = _db.ParentChildren
+                    .Where(pc => pc.ParentId == p.Id && pc.ChildId == childId)
+                    .Select(pc => new { pc.CanViewCamera })
+                    .FirstOrDefault(),
+                Child = _db.Children
+                    .Where(c => c.Id == childId)
+                    .Select(c => new { c.IsActive, c.RoomId })
+                    .FirstOrDefault(),
+                AttendanceSessionId = _db.AttendanceSessions
+                    .Where(a => a.ChildId == childId && a.Status == AttendanceStatus.PRESENT)
+                    .OrderByDescending(a => a.CheckInUtc)
+                    .Select(a => (Guid?)a.Id)
+                    .FirstOrDefault()
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (parent is null || parent.Status != ParentStatus.Active)
+        if (context is null || context.ParentStatus != ParentStatus.Active)
         {
             return Denied("FORBIDDEN", "No active parent profile was found for this account.");
         }
 
-        var relation = await _db.ParentChildren
-            .AsNoTracking()
-            .FirstOrDefaultAsync(pc => pc.ParentId == parent.Id && pc.ChildId == childId, cancellationToken);
-
-        if (relation is null)
+        if (context.Relation is null)
         {
             return Denied("PARENT_CHILD_RELATION_NOT_FOUND", "This child is not linked to your account.");
         }
 
-        if (!relation.CanViewCamera)
+        if (!context.Relation.CanViewCamera)
         {
             return Denied("CAMERA_ACCESS_DENIED", "Camera viewing has not been enabled for this child.");
         }
 
-        var child = await _db.Children
-            .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == childId, cancellationToken);
-
-        if (child is null || !child.IsActive)
+        if (context.Child is null || !context.Child.IsActive)
         {
             return Denied("CHILD_NOT_FOUND", "Child not found.");
         }
 
-        if (child.RoomId is null)
+        if (context.Child.RoomId is not { } childRoomId)
         {
             return Denied("CAMERA_ACCESS_DENIED", "Child is not currently assigned to a room.");
         }
 
-        var attendance = await _db.AttendanceSessions
-            .AsNoTracking()
-            .Where(a => a.ChildId == childId && a.Status == AttendanceStatus.PRESENT)
-            .OrderByDescending(a => a.CheckInUtc)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (attendance is null)
+        if (context.AttendanceSessionId is not { } attendanceSessionId)
         {
             return Denied("CHILD_NOT_PRESENT", "Child does not currently have an active attendance session.");
         }
 
         var camera = await _db.Cameras
             .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == cameraId, cancellationToken);
+            .Where(c => c.Id == cameraId)
+            .Select(c => new
+            {
+                c.IsActive,
+                c.Status,
+                AssignedToChildRoom = _db.CameraRooms.Any(cr => cr.CameraId == cameraId
+                                                                && cr.RoomId == childRoomId
+                                                                && (cr.ValidToUtc == null || cr.ValidToUtc > now))
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (camera is null)
         {
             return Denied("CAMERA_NOT_FOUND", "Camera not found.");
         }
 
-        var cameraAssignedToRoom = await _db.CameraRooms
-            .AsNoTracking()
-            .AnyAsync(cr => cr.CameraId == cameraId
-                            && cr.RoomId == child.RoomId
-                            && (cr.ValidToUtc == null || cr.ValidToUtc > now),
-                cancellationToken);
-
-        if (!cameraAssignedToRoom)
+        if (!camera.AssignedToChildRoom)
         {
             return Denied("CAMERA_ACCESS_DENIED", "Camera is not assigned to this child's room.");
         }
@@ -101,7 +111,7 @@ public sealed class CameraAccessPolicy : ICameraAccessPolicy
             return Denied("CAMERA_NOT_AVAILABLE", "Camera is not currently available.");
         }
 
-        return new CameraAccessDecision(true, null, null, attendance.Id, parent.Id);
+        return new CameraAccessDecision(true, null, null, attendanceSessionId, context.ParentId);
     }
 
     private static CameraAccessDecision Denied(string code, string message) => new(false, code, message);

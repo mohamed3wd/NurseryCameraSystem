@@ -76,7 +76,6 @@ public sealed class CreateCameraCommandHandler : IRequestHandler<CreateCameraCom
         };
 
         _db.Cameras.Add(camera);
-        await _db.SaveChangesAsync(cancellationToken);
 
         // Metadata intentionally excludes RtspUrl/Username/Password (BR-016).
         await _auditService.LogAsync(

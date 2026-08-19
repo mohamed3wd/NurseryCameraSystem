@@ -14,6 +14,10 @@ namespace NurseryCamera.Infrastructure.Notifications;
 /// transient failure. The OutboxWorker is responsible for eventual delivery.
 /// Per spec section 22, this is a courtesy signal only - server-side authorization and
 /// session revocation always happen independently of whether this notification is delivered.
+///
+/// Messages are staged on the change tracker and flushed by <c>UnitOfWorkBehavior</c> together
+/// with the state change that produced them, which both removes a round trip per notification
+/// and makes the enqueue genuinely transactional with that state change.
 /// </summary>
 public sealed class SignalRNotificationService : INotificationService
 {
@@ -40,7 +44,7 @@ public sealed class SignalRNotificationService : INotificationService
     public Task NotifyCameraStatusChangedAsync(Guid cameraId, string status, CancellationToken cancellationToken = default)
         => EnqueueAsync("CameraStatusChanged", new { CameraId = cameraId, Status = status }, cancellationToken);
 
-    private async Task EnqueueAsync(string eventType, object payload, CancellationToken cancellationToken)
+    private Task EnqueueAsync(string eventType, object payload, CancellationToken cancellationToken)
     {
         var outboxMessage = new OutboxMessage
         {
@@ -51,11 +55,12 @@ public sealed class SignalRNotificationService : INotificationService
         };
 
         _dbContext.OutboxMessages.Add(outboxMessage);
-        await _dbContext.SaveChangesAsync(cancellationToken);
 
         _logger.LogDebug(
             "Queued notification {EventType} via outbox message {OutboxMessageId}.",
             eventType,
             outboxMessage.Id);
+
+        return Task.CompletedTask;
     }
 }

@@ -18,6 +18,10 @@ public static class DependencyInjection
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
 
+        // Registered last so it sits closest to the handler: only work the handler actually
+        // staged gets committed, and validation failures never reach a SaveChanges.
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(UnitOfWorkBehavior<,>));
+
         services.AddScoped<ICameraAccessPolicy, CameraAccessPolicy>();
 
         return services;

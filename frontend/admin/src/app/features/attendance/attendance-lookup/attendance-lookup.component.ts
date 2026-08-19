@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { AttendanceService } from '../../../core/services/attendance.service';
@@ -10,7 +10,8 @@ import { AttendanceDto } from '../../../core/models/attendance.models';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './attendance-lookup.component.html',
-  styleUrl: './attendance-lookup.component.scss'
+  styleUrl: './attendance-lookup.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AttendanceLookupComponent {
   private readonly formBuilder = inject(FormBuilder);
@@ -31,9 +32,7 @@ export class AttendanceLookupComponent {
 
   constructor(private readonly attendanceService: AttendanceService) {}
 
-  get isCheckedIn(): boolean {
-    return this.attendance()?.status === 'PRESENT';
-  }
+  readonly isCheckedIn = computed(() => this.attendance()?.status === 'PRESENT');
 
   lookup(): void {
     if (this.lookupForm.invalid) {

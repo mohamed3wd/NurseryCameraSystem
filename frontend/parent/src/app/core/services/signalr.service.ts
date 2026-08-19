@@ -27,6 +27,10 @@ export class SignalrService {
       return;
     }
 
+    // A previous attempt that failed to start leaves a disconnected connection behind, still
+    // holding its handlers. Dispose it before building a replacement.
+    await this.disconnect();
+
     this.connection = new signalR.HubConnectionBuilder()
       .withUrl(environment.hubUrl, {
         accessTokenFactory: () => this.authService.accessToken ?? ''
@@ -51,7 +55,20 @@ export class SignalrService {
   }
 
   async disconnect(): Promise<void> {
-    await this.connection?.stop();
+    const connection = this.connection;
     this.connection = null;
+
+    if (!connection) {
+      return;
+    }
+
+    connection.off('ChildCheckedOut');
+    connection.off('ViewingSessionRevoked');
+
+    try {
+      await connection.stop();
+    } catch {
+      // Already dropped by the server or the network; nothing left to release.
+    }
   }
 }

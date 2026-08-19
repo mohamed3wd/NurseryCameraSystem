@@ -3,36 +3,41 @@
 
   <div class="viewing-shell card">
     <div class="stream-area">
-      @switch (state()) {
-        @case ('starting') {
-          <div class="stream-placeholder">
-            <div class="spinner"></div>
-            <p>{{ 'view.requesting' | t }}</p>
-          </div>
-        }
-        @case ('connecting') {
-          <div class="stream-placeholder">
-            <div class="spinner"></div>
-            <p>{{ 'view.connectingMedia' | t }}</p>
-          </div>
-        }
-        @case ('live') {
-          <div class="stream-live-wrap">
-            <video #liveVideo class="live-video" autoplay playsinline muted></video>
+      @if (state() === 'connecting' || state() === 'live') {
+        <!-- Kept mounted across connecting -> live so the video element (and the WebRTC
+             stream attached to it) survives the transition instead of being recreated. -->
+        <div class="stream-live-wrap">
+          <video #liveVideo class="live-video" autoplay playsinline muted></video>
+
+          @if (state() === 'connecting') {
+            <div class="stream-overlay">
+              <div class="spinner"></div>
+              <p>{{ 'view.connectingMedia' | t }}</p>
+            </div>
+          } @else {
             <span class="live-badge"><span class="live-dot"></span> {{ 'view.live' | t }}</span>
-          </div>
-        }
-        @case ('ended') {
-          <div class="stream-placeholder">
-            <p class="mock-title">{{ 'view.ended' | t }}</p>
-            <p class="mock-subtitle">{{ endReason() }}</p>
-          </div>
-        }
-        @case ('error') {
-          <div class="stream-placeholder">
-            <p class="mock-title error-text">{{ 'view.startErrorTitle' | t }}</p>
-            <p class="mock-subtitle">{{ errorMessage() }}</p>
-          </div>
+          }
+        </div>
+      } @else {
+        @switch (state()) {
+          @case ('starting') {
+            <div class="stream-placeholder">
+              <div class="spinner"></div>
+              <p>{{ 'view.requesting' | t }}</p>
+            </div>
+          }
+          @case ('ended') {
+            <div class="stream-placeholder">
+              <p class="mock-title">{{ 'view.ended' | t }}</p>
+              <p class="mock-subtitle">{{ endReason() }}</p>
+            </div>
+          }
+          @case ('error') {
+            <div class="stream-placeholder">
+              <p class="mock-title error-text">{{ 'view.startErrorTitle' | t }}</p>
+              <p class="mock-subtitle">{{ errorMessage() }}</p>
+            </div>
+          }
         }
       }
     </div>
@@ -40,19 +45,19 @@
     <div class="session-panel">
       <h2>{{ 'view.sessionInfo' | t }}</h2>
 
-      @if (session()) {
+      @if (session(); as activeSession) {
         <dl class="session-grid">
           <div>
             <dt>{{ 'view.sessionId' | t }}</dt>
-            <dd class="mono">{{ session()!.sessionId }}</dd>
+            <dd class="mono">{{ activeSession.sessionId }}</dd>
           </div>
           <div>
             <dt>{{ 'view.protocol' | t }}</dt>
-            <dd>{{ session()!.mediaProtocol }}</dd>
+            <dd>{{ activeSession.mediaProtocol }}</dd>
           </div>
           <div>
             <dt>{{ 'view.expires' | t }}</dt>
-            <dd>{{ session()!.expiresAtUtc | date: 'short' }}</dd>
+            <dd>{{ activeSession.expiresAtUtc | date: 'short' }}</dd>
           </div>
           <div>
             <dt>{{ 'common.status' | t }}</dt>
@@ -62,13 +67,7 @@
                 [class.badge-success]="state() === 'live'"
                 [class.badge-neutral]="state() !== 'live'"
               >
-                {{
-                  state() === 'live'
-                    ? ('view.live' | t)
-                    : state() === 'starting' || state() === 'connecting'
-                      ? ('view.connecting' | t)
-                      : ('view.endedStatus' | t)
-                }}
+                {{ statusLabel() }}
               </span>
             </dd>
           </div>
@@ -82,7 +81,7 @@
       <button
         class="btn btn-danger stop-btn"
         type="button"
-        [disabled]="state() !== 'live' && state() !== 'connecting'"
+        [disabled]="!canStop()"
         (click)="stopViewing()"
       >
         {{ 'view.stop' | t }}

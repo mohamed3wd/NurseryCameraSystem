@@ -35,8 +35,8 @@
           <div>
             <dt>{{ 'common.status' | t }}</dt>
             <dd>
-              <span class="badge" [class.badge-success]="isCheckedIn" [class.badge-neutral]="!isCheckedIn">
-                {{ isCheckedIn ? ('attendance.checkedIn' | t) : attendance()!.status }}
+              <span class="badge" [class.badge-success]="isCheckedIn()" [class.badge-neutral]="!isCheckedIn()">
+                {{ isCheckedIn() ? ('attendance.checkedIn' | t) : attendance()!.status }}
               </span>
             </dd>
           </div>
@@ -65,10 +65,10 @@
       </div>
 
       <div class="action-row">
-        <button class="btn btn-primary" type="button" [disabled]="isActing() || isCheckedIn" (click)="checkIn()">
+        <button class="btn btn-primary" type="button" [disabled]="isActing() || isCheckedIn()" (click)="checkIn()">
           {{ isActing() ? ('attendance.working' | t) : ('attendance.checkIn' | t) }}
         </button>
-        <button class="btn btn-danger" type="button" [disabled]="isActing() || !isCheckedIn" (click)="checkOut()">
+        <button class="btn btn-danger" type="button" [disabled]="isActing() || !isCheckedIn()" (click)="checkOut()">
           {{ isActing() ? ('attendance.working' | t) : ('attendance.checkOut' | t) }}
         </button>
       </div>

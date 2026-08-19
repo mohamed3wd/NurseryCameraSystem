@@ -8,6 +8,9 @@ namespace NurseryCamera.Application.Behaviors;
 public sealed class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
+    /// <summary>Above this, a successful request is worth surfacing at Information.</summary>
+    private const long SlowRequestThresholdMs = 500;
+
     private readonly ILogger<LoggingBehavior<TRequest, TResponse>> _logger;
 
     public LoggingBehavior(ILogger<LoggingBehavior<TRequest, TResponse>> logger)
@@ -23,7 +26,19 @@ public sealed class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRe
         try
         {
             var response = await next(cancellationToken);
-            _logger.LogInformation("Handled {RequestName} in {ElapsedMs}ms", requestName, stopwatch.ElapsedMilliseconds);
+
+            // Routine successes are Debug so a busy nursery doesn't pay for (or drown in) one
+            // Information entry per request; only slow ones stay visible at default levels.
+            var elapsedMs = stopwatch.ElapsedMilliseconds;
+            if (elapsedMs >= SlowRequestThresholdMs)
+            {
+                _logger.LogInformation("Handled {RequestName} in {ElapsedMs}ms", requestName, elapsedMs);
+            }
+            else
+            {
+                _logger.LogDebug("Handled {RequestName} in {ElapsedMs}ms", requestName, elapsedMs);
+            }
+
             return response;
         }
         catch (Exception ex)

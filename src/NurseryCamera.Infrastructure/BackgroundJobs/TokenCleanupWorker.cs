@@ -71,12 +71,20 @@ public sealed class TokenCleanupWorker : BackgroundService
             .Where(t => t.Status != StreamTokenStatus.ACTIVE && t.ExpiresAtUtc < retentionCutoff)
             .ExecuteDeleteAsync(cancellationToken);
 
-        if (lapsedCount > 0 || deletedCount > 0)
+        // CameraHealthWorker writes one row per camera per poll, so this table grows fastest of
+        // all and would otherwise slow down every health/status read.
+        var healthCutoff = now.AddDays(-Math.Max(1, _options.CameraHealthCheckRetentionDays));
+        var deletedHealthChecks = await dbContext.CameraHealthChecks
+            .Where(h => h.CheckedAtUtc < healthCutoff)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        if (lapsedCount > 0 || deletedCount > 0 || deletedHealthChecks > 0)
         {
             _logger.LogInformation(
-                "Token cleanup: expired {LapsedCount}, deleted {DeletedCount} retention-expired token(s).",
+                "Cleanup: expired {LapsedCount} token(s), deleted {DeletedCount} retention-expired token(s) and {DeletedHealthChecks} health check(s).",
                 lapsedCount,
-                deletedCount);
+                deletedCount,
+                deletedHealthChecks);
         }
     }
 }

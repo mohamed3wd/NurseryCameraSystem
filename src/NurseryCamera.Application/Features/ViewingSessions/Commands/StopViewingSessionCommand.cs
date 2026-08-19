@@ -81,8 +81,6 @@ public sealed class StopViewingSessionCommandHandler : IRequestHandler<StopViewi
                 token.RevokedAtUtc = now;
             }
 
-            await _db.SaveChangesAsync(cancellationToken);
-
             try
             {
                 await _liveStreamService.StopAsync(new StopStreamRequest(session.Id, null), cancellationToken);

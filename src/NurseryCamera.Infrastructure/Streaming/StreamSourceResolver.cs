@@ -60,12 +60,20 @@ public sealed class StreamSourceResolver : IStreamSourceResolver
                 false, null, null, auth.DenialCode, auth.DenialMessage);
         }
 
-        var session = await _dbContext.ViewingSessions
-            .Include(v => v.Camera)
+        // Only the three encrypted columns are read back; loading the ViewingSession and Camera
+        // entities in full would pull far more data than the gateway hand-off needs.
+        var secrets = await _dbContext.ViewingSessions
             .AsNoTracking()
-            .FirstOrDefaultAsync(v => v.Id == viewingSessionId, cancellationToken);
+            .Where(v => v.Id == viewingSessionId)
+            .Select(v => new
+            {
+                v.Camera.RtspUrlEncrypted,
+                v.Camera.UsernameEncrypted,
+                v.Camera.PasswordEncrypted
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (session is null)
+        if (secrets is null)
         {
             return new StreamSourceResolveResult(
                 false, null, null, "VIEWING_SESSION_NOT_FOUND", "Viewing session was not found.");
@@ -76,9 +84,9 @@ public sealed class StreamSourceResolver : IStreamSourceResolver
         try
         {
             source = BuildSource(
-                session.Camera.RtspUrlEncrypted,
-                session.Camera.UsernameEncrypted,
-                session.Camera.PasswordEncrypted);
+                secrets.RtspUrlEncrypted,
+                secrets.UsernameEncrypted,
+                secrets.PasswordEncrypted);
         }
         catch
         {

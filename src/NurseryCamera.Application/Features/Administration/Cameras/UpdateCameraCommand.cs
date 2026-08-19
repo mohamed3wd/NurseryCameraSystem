@@ -73,8 +73,6 @@ public sealed class UpdateCameraCommandHandler : IRequestHandler<UpdateCameraCom
             camera.PasswordEncrypted = _encryptionService.Encrypt(request.Password);
         }
 
-        await _db.SaveChangesAsync(cancellationToken);
-
         await _auditService.LogAsync(
             new AuditEvent(_currentUser.UserId, "CAMERA_UPDATED", "Camera", camera.Id.ToString(), "SUCCESS",
                 Metadata: new { camera.Name }),

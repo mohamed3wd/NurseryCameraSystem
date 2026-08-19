@@ -51,7 +51,10 @@ public static class DependencyInjection
         services.AddSingleton<IStreamTokenGenerator, StreamTokenGenerator>();
         services.AddSingleton<IClock, SystemClock>();
 
-        services.AddHttpClient("go2rtc");
+        // A hung media server must not hold an API request (and its DB connection) open; the
+        // handler lifetime keeps sockets from going stale behind a rotating gateway address.
+        services.AddHttpClient("go2rtc", client => client.Timeout = TimeSpan.FromSeconds(10))
+            .SetHandlerLifetime(TimeSpan.FromMinutes(5));
         services.AddScoped<IStreamSourceResolver, StreamSourceResolver>();
 
         var mediaProvider = configuration.GetSection(MediaGatewayOptions.SectionName)["Provider"] ?? "Mock";
@@ -106,7 +109,15 @@ public static class DependencyInjection
             }
 
             options.UseSqlServer(connectionString, sql =>
-                sql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName));
+            {
+                sql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
+
+                // Transient SQL faults (failovers, throttling) would otherwise surface as a
+                // failed check-in or a dropped viewing session. No code path opens an explicit
+                // transaction, so the execution strategy can retry safely.
+                sql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorNumbersToAdd: null);
+                sql.CommandTimeout(30);
+            });
         });
 
         return services;
