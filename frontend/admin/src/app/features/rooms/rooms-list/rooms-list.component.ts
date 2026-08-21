@@ -2,8 +2,10 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-import { RoomsService } from '../../../core/services/rooms.service';
+import { NurseryDto } from '../../../core/models/nursery.models';
 import { RoomDto } from '../../../core/models/room.models';
+import { NurseriesService } from '../../../core/services/nurseries.service';
+import { RoomsService } from '../../../core/services/rooms.service';
 
 @Component({
   selector: 'app-rooms-list',
@@ -17,6 +19,7 @@ export class RoomsListComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
 
   readonly rooms = signal<RoomDto[]>([]);
+  readonly nurseries = signal<NurseryDto[]>([]);
   readonly isLoading = signal(true);
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -30,10 +33,14 @@ export class RoomsListComponent implements OnInit {
     roomType: ['']
   });
 
-  constructor(private readonly roomsService: RoomsService) {}
+  constructor(
+    private readonly roomsService: RoomsService,
+    private readonly nurseriesService: NurseriesService
+  ) {}
 
   ngOnInit(): void {
     this.loadRooms();
+    this.loadNurseries();
   }
 
   loadRooms(): void {
@@ -44,7 +51,7 @@ export class RoomsListComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: () => {
-        this.errorMessage.set('We couldn\u2019t load rooms right now.');
+        this.errorMessage.set('rooms.loadError');
         this.isLoading.set(false);
       }
     });
@@ -53,6 +60,9 @@ export class RoomsListComponent implements OnInit {
   toggleForm(): void {
     this.showForm.set(!this.showForm());
     this.formError.set(null);
+    if (this.showForm()) {
+      this.applyDefaultNursery();
+    }
   }
 
   submit(): void {
@@ -72,13 +82,40 @@ export class RoomsListComponent implements OnInit {
         next: (room) => {
           this.rooms.set([room, ...this.rooms()]);
           this.isSubmitting.set(false);
-          this.form.reset();
+          this.form.reset({ nurseryId: this.defaultNurseryId() });
           this.showForm.set(false);
         },
         error: () => {
           this.isSubmitting.set(false);
-          this.formError.set('Couldn\u2019t create this room. Check the nursery ID and try again.');
+          this.formError.set('rooms.createError');
         }
       });
+  }
+
+  private loadNurseries(): void {
+    this.nurseriesService.getNurseries().subscribe({
+      next: (nurseries) => {
+        this.nurseries.set(nurseries);
+        this.applyDefaultNursery();
+      },
+      error: () => undefined
+    });
+  }
+
+  private applyDefaultNursery(): void {
+    const current = this.form.controls.nurseryId.value;
+    if (current) {
+      return;
+    }
+
+    const defaultId = this.defaultNurseryId();
+    if (defaultId) {
+      this.form.patchValue({ nurseryId: defaultId });
+    }
+  }
+
+  private defaultNurseryId(): string {
+    const list = this.nurseries();
+    return list.length === 1 ? list[0].id : '';
   }
 }

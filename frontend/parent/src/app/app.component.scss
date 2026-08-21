@@ -2,7 +2,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.75rem;
+  padding: calc(1rem + var(--safe-area-top)) max(1.75rem, var(--safe-area-right)) 1rem
+    max(1.75rem, var(--safe-area-left));
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
 }

@@ -52,7 +52,7 @@ export class AttendanceLookupComponent {
         this.isLoading.set(false);
       },
       error: () => {
-        this.errorMessage.set('We couldn\u2019t look up attendance for that child ID.');
+        this.errorMessage.set('attendance.lookupError');
         this.hasLookedUp.set(false);
         this.isLoading.set(false);
       }
@@ -71,7 +71,7 @@ export class AttendanceLookupComponent {
       },
       error: () => {
         this.isActing.set(false);
-        this.actionError.set('Check-in failed. The child may already be checked in.');
+        this.actionError.set('attendance.checkInError');
       }
     });
   }
@@ -87,7 +87,7 @@ export class AttendanceLookupComponent {
       },
       error: () => {
         this.isActing.set(false);
-        this.actionError.set('Check-out failed. The child may already be checked out.');
+        this.actionError.set('attendance.checkOutError');
       }
     });
   }

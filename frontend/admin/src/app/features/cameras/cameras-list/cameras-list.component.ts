@@ -2,8 +2,10 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-import { CamerasService } from '../../../core/services/cameras.service';
 import { CameraAdminDto } from '../../../core/models/camera.models';
+import { NurseryDto } from '../../../core/models/nursery.models';
+import { CamerasService } from '../../../core/services/cameras.service';
+import { NurseriesService } from '../../../core/services/nurseries.service';
 
 @Component({
   selector: 'app-cameras-list',
@@ -17,6 +19,7 @@ export class CamerasListComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
 
   readonly cameras = signal<CameraAdminDto[]>([]);
+  readonly nurseries = signal<NurseryDto[]>([]);
   readonly isLoading = signal(true);
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -34,10 +37,14 @@ export class CamerasListComponent implements OnInit {
     streamProfile: ['main']
   });
 
-  constructor(private readonly camerasService: CamerasService) {}
+  constructor(
+    private readonly camerasService: CamerasService,
+    private readonly nurseriesService: NurseriesService
+  ) {}
 
   ngOnInit(): void {
     this.loadCameras();
+    this.loadNurseries();
   }
 
   loadCameras(): void {
@@ -48,7 +55,7 @@ export class CamerasListComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: () => {
-        this.errorMessage.set('We couldn\u2019t load cameras right now.');
+        this.errorMessage.set('cameras.loadError');
         this.isLoading.set(false);
       }
     });
@@ -57,6 +64,9 @@ export class CamerasListComponent implements OnInit {
   toggleForm(): void {
     this.showForm.set(!this.showForm());
     this.formError.set(null);
+    if (this.showForm()) {
+      this.applyDefaultNursery();
+    }
   }
 
   submit(): void {
@@ -85,12 +95,12 @@ export class CamerasListComponent implements OnInit {
         next: (camera) => {
           this.cameras.set([camera, ...this.cameras()]);
           this.isSubmitting.set(false);
-          this.form.reset({ streamProfile: 'main' });
+          this.form.reset({ streamProfile: 'main', nurseryId: this.defaultNurseryId() });
           this.showForm.set(false);
         },
         error: () => {
           this.isSubmitting.set(false);
-          this.formError.set('Couldn\u2019t create this camera. Check the fields and try again.');
+          this.formError.set('cameras.createError');
         }
       });
   }
@@ -110,5 +120,32 @@ export class CamerasListComponent implements OnInit {
       },
       error: () => this.togglingId.set(null)
     });
+  }
+
+  private loadNurseries(): void {
+    this.nurseriesService.getNurseries().subscribe({
+      next: (nurseries) => {
+        this.nurseries.set(nurseries);
+        this.applyDefaultNursery();
+      },
+      error: () => undefined
+    });
+  }
+
+  private applyDefaultNursery(): void {
+    const current = this.form.controls.nurseryId.value;
+    if (current) {
+      return;
+    }
+
+    const defaultId = this.defaultNurseryId();
+    if (defaultId) {
+      this.form.patchValue({ nurseryId: defaultId });
+    }
+  }
+
+  private defaultNurseryId(): string {
+    const list = this.nurseries();
+    return list.length === 1 ? list[0].id : '';
   }
 }

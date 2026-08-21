@@ -3,7 +3,6 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LangSwitcherComponent } from '../../../core/i18n/lang-switcher.component';
-import { I18nService } from '../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -17,7 +16,6 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class LoginComponent {
   private readonly formBuilder = inject(FormBuilder);
-  private readonly i18n = inject(I18nService);
 
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -46,11 +44,11 @@ export class LoginComponent {
     this.authService.login({ email: email!, password: password! }).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.router.navigateByUrl('/rooms');
+        this.router.navigateByUrl('/nurseries');
       },
       error: () => {
         this.isSubmitting.set(false);
-        this.errorMessage.set(this.i18n.t('login.failed'));
+        this.errorMessage.set('login.failed');
       }
     });
   }

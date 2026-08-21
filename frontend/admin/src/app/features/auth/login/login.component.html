@@ -49,7 +49,7 @@
       </div>
 
       @if (errorMessage()) {
-        <p class="error-text login-error">{{ errorMessage() }}</p>
+        <p class="error-text login-error">{{ errorMessage()! | t }}</p>
       }
 
       <button class="btn btn-primary login-submit" type="submit" [disabled]="isSubmitting()">

@@ -69,7 +69,7 @@ export class AuditLogListComponent implements OnInit {
           this.isLoading.set(false);
         },
         error: () => {
-          this.errorMessage.set('We couldn\u2019t load the audit log right now.');
+          this.errorMessage.set('audit.loadError');
           this.isLoading.set(false);
         }
       });

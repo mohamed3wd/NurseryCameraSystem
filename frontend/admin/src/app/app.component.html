@@ -1,11 +1,12 @@
 @if (authService.isAuthenticated()) {
   <header class="app-header">
-    <a class="brand" routerLink="/rooms">
+    <a class="brand" routerLink="/nurseries">
       <span class="brand-mark">NC</span>
       <span class="brand-name">{{ 'app.brand' | t }} <span class="brand-suffix">{{ 'app.admin' | t }}</span></span>
     </a>
 
     <nav class="app-nav">
+      <a routerLink="/nurseries" routerLinkActive="active">{{ 'nav.nurseries' | t }}</a>
       <a routerLink="/rooms" routerLinkActive="active">{{ 'nav.rooms' | t }}</a>
       <a routerLink="/cameras" routerLinkActive="active">{{ 'nav.cameras' | t }}</a>
       <a routerLink="/attendance" routerLinkActive="active">{{ 'nav.attendance' | t }}</a>

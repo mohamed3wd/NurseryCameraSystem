@@ -16,6 +16,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { SignalrService } from '../../../core/services/signalr.service';
+import { CapacitorService } from '../../../core/services/capacitor.service';
 import { ViewingSessionService } from '../../../core/services/viewing-session.service';
 import { WebRtcPlayerService } from '../../../core/services/webrtc-player.service';
 import { StartViewingSessionResponse } from '../../../core/models/viewing-session.models';
@@ -39,6 +40,7 @@ export class LiveViewComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly viewingSessionService = inject(ViewingSessionService);
   private readonly signalrService = inject(SignalrService);
+  private readonly capacitorService = inject(CapacitorService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly state = signal<ViewingState>('starting');
@@ -91,6 +93,7 @@ export class LiveViewComponent implements OnInit {
 
     this.startSession();
     this.listenForRealtimeEvents();
+    this.listenForAppBackground();
   }
 
   stopViewing(): void {
@@ -143,6 +146,20 @@ export class LiveViewComponent implements OnInit {
       this.errorMessage.set(this.i18n.t('view.mediaError'));
       this.stopOnServerIfNeeded();
     }
+  }
+
+  private listenForAppBackground(): void {
+    if (!this.capacitorService.isNative) {
+      return;
+    }
+
+    this.capacitorService.paused$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.canStop()) {
+          this.endSession(this.i18n.t('view.backgrounded'));
+        }
+      });
   }
 
   private listenForRealtimeEvents(): void {

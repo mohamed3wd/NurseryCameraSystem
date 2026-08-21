@@ -74,7 +74,8 @@ export const PARENT_EN: TranslationDict = {
   'view.stop': 'Stop viewing',
   'view.youEnded': 'You ended the viewing session.',
   'view.checkedOut': 'Viewing stopped automatically because your child was checked out.',
-  'view.revoked': 'Your viewing session was ended by the system.'
+  'view.revoked': 'Your viewing session was ended by the system.',
+  'view.backgrounded': 'Viewing stopped because the app moved to the background.'
 };
 
 export const PARENT_AR: TranslationDict = {
@@ -149,5 +150,6 @@ export const PARENT_AR: TranslationDict = {
   'view.stop': 'إيقاف المشاهدة',
   'view.youEnded': 'لقد أنهيت جلسة المشاهدة.',
   'view.checkedOut': 'توقفت المشاهدة تلقائيًا لأن طفلك سُجّل انصرافه.',
-  'view.revoked': 'أنهى النظام جلسة المشاهدة.'
+  'view.revoked': 'أنهى النظام جلسة المشاهدة.',
+  'view.backgrounded': 'توقفت المشاهدة لأن التطبيق انتقل إلى الخلفية.'
 };

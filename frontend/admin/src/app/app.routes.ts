@@ -7,6 +7,14 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/login/login.component').then((m) => m.LoginComponent)
   },
   {
+    path: 'nurseries',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/nurseries/nurseries-list/nurseries-list.component').then(
+        (m) => m.NurseriesListComponent
+      )
+  },
+  {
     path: 'rooms',
     canActivate: [authGuard],
     loadComponent: () => import('./features/rooms/rooms-list/rooms-list.component').then((m) => m.RoomsListComponent)
@@ -33,6 +41,6 @@ export const routes: Routes = [
         (m) => m.AuditLogListComponent
       )
   },
-  { path: '', pathMatch: 'full', redirectTo: 'rooms' },
-  { path: '**', redirectTo: 'rooms' }
+  { path: '', pathMatch: 'full', redirectTo: 'nurseries' },
+  { path: '**', redirectTo: 'nurseries' }
 ];

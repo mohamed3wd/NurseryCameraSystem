@@ -83,7 +83,8 @@ services:
       - internal-network
       - public-network
     ports:
-      - "8080:8080"
+      # Host 8080 is often taken by other local stacks; override with API_HOST_PORT if needed.
+      - "${API_HOST_PORT:-5080}:8080"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
       interval: 15s

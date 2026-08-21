@@ -22,7 +22,7 @@
       </button>
     </div>
     @if (errorMessage()) {
-      <p class="error-text">{{ errorMessage() }}</p>
+      <p class="error-text">{{ errorMessage()! | t }}</p>
     }
   </form>
 
@@ -74,7 +74,7 @@
       </div>
 
       @if (actionError()) {
-        <p class="error-text">{{ actionError() }}</p>
+        <p class="error-text">{{ actionError()! | t }}</p>
       }
     </div>
   }

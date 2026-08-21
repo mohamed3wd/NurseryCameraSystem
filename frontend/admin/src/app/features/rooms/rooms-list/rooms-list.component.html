@@ -13,8 +13,13 @@
     <form class="card new-room-form" [formGroup]="form" (ngSubmit)="submit()">
       <div class="inline-form">
         <div class="form-field">
-          <label for="nurseryId">{{ 'rooms.nurseryId' | t }}</label>
-          <input id="nurseryId" type="text" formControlName="nurseryId" placeholder="00000000-0000-0000-0000-000000000000" />
+          <label for="nurseryId">{{ 'rooms.nursery' | t }}</label>
+          <select id="nurseryId" formControlName="nurseryId">
+            <option value="" disabled>{{ 'common.selectNursery' | t }}</option>
+            @for (nursery of nurseries(); track nursery.id) {
+              <option [value]="nursery.id">{{ nursery.name }}</option>
+            }
+          </select>
         </div>
         <div class="form-field">
           <label for="name">{{ 'common.name' | t }}</label>
@@ -33,7 +38,7 @@
         </button>
       </div>
       @if (formError()) {
-        <p class="error-text">{{ formError() }}</p>
+        <p class="error-text">{{ formError()! | t }}</p>
       }
     </form>
   }
@@ -41,7 +46,7 @@
   @if (isLoading()) {
     <p class="loading-text">{{ 'rooms.loading' | t }}</p>
   } @else if (errorMessage()) {
-    <p class="error-text">{{ errorMessage() }}</p>
+    <p class="error-text">{{ errorMessage()! | t }}</p>
   } @else if (rooms().length === 0) {
     <div class="empty-state card">
       <p>{{ 'rooms.empty' | t }}</p>

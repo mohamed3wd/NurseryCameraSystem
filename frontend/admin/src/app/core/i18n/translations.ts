@@ -16,9 +16,11 @@ export const ADMIN_EN: TranslationDict = {
   'common.status': 'Status',
   'common.lang.en': 'EN',
   'common.lang.ar': 'عربي',
+  'common.selectNursery': 'Select a nursery',
 
   'app.brand': 'NurseryCam',
   'app.admin': 'Admin',
+  'nav.nurseries': 'Nurseries',
   'nav.rooms': 'Rooms',
   'nav.cameras': 'Cameras',
   'nav.attendance': 'Attendance',
@@ -35,9 +37,22 @@ export const ADMIN_EN: TranslationDict = {
   'login.failed': 'We couldn\'t sign you in. Check your email and password and try again.',
   'login.demo': 'Demo account: admin@demo-nursery.local / Passw0rd!123',
 
+  'nurseries.title': 'Nurseries',
+  'nurseries.subtitle': 'Nurseries you manage — each room and camera belongs to one nursery.',
+  'nurseries.new': 'New nursery',
+  'nurseries.timeZone': 'Time zone',
+  'nurseries.address': 'Address',
+  'nurseries.create': 'Create nursery',
+  'nurseries.creating': 'Creating…',
+  'nurseries.loading': 'Loading nurseries…',
+  'nurseries.empty': 'No nurseries yet. Create the first one to get started.',
+  'nurseries.loadError': 'We couldn\'t load nurseries right now.',
+  'nurseries.createError': 'Couldn\'t create this nursery. Check the fields and try again.',
+
   'rooms.title': 'Rooms',
   'rooms.subtitle': 'Rooms in your nursery and their active status.',
   'rooms.new': 'New room',
+  'rooms.nursery': 'Nursery',
   'rooms.nurseryId': 'Nursery ID',
   'rooms.code': 'Code',
   'rooms.type': 'Room type',
@@ -46,10 +61,13 @@ export const ADMIN_EN: TranslationDict = {
   'rooms.creating': 'Creating…',
   'rooms.loading': 'Loading rooms…',
   'rooms.empty': 'No rooms yet. Create the first one to get started.',
+  'rooms.loadError': 'We couldn\'t load rooms right now.',
+  'rooms.createError': 'Couldn\'t create this room. Check the nursery and try again.',
 
   'cameras.title': 'Cameras',
   'cameras.subtitle': 'RTSP details are encrypted at rest and never returned by the API after creation.',
   'cameras.new': 'New camera',
+  'cameras.nursery': 'Nursery',
   'cameras.nurseryId': 'Nursery ID',
   'cameras.location': 'Location',
   'cameras.rtsp': 'RTSP URL',
@@ -65,6 +83,8 @@ export const ADMIN_EN: TranslationDict = {
   'cameras.enable': 'Enable',
   'cameras.disable': 'Disable',
   'cameras.activeCol': 'Active',
+  'cameras.loadError': 'We couldn\'t load cameras right now.',
+  'cameras.createError': 'Couldn\'t create this camera. Check the fields and try again.',
 
   'attendance.title': 'Attendance',
   'attendance.subtitle': 'Look up a child by ID to check them in or out.',
@@ -80,6 +100,9 @@ export const ADMIN_EN: TranslationDict = {
   'attendance.checkIn': 'Check in',
   'attendance.checkOut': 'Check out',
   'attendance.working': 'Working…',
+  'attendance.lookupError': 'We couldn\'t look up attendance for that child ID.',
+  'attendance.checkInError': 'Check-in failed. The child may already be checked in.',
+  'attendance.checkOutError': 'Check-out failed. The child may already be checked out.',
 
   'audit.title': 'Audit logs',
   'audit.subtitle': 'Every sensitive action taken across the system, most recent first.',
@@ -95,7 +118,8 @@ export const ADMIN_EN: TranslationDict = {
   'audit.system': 'System',
   'audit.prev': 'Previous',
   'audit.next': 'Next',
-  'audit.page': 'Page {{page}} of {{total}}'
+  'audit.page': 'Page {{page}} of {{total}}',
+  'audit.loadError': 'We couldn\'t load the audit log right now.'
 };
 
 export const ADMIN_AR: TranslationDict = {
@@ -112,9 +136,11 @@ export const ADMIN_AR: TranslationDict = {
   'common.status': 'الحالة',
   'common.lang.en': 'EN',
   'common.lang.ar': 'عربي',
+  'common.selectNursery': 'اختر الحضانة',
 
   'app.brand': 'NurseryCam',
   'app.admin': 'الإدارة',
+  'nav.nurseries': 'الحضانات',
   'nav.rooms': 'الغرف',
   'nav.cameras': 'الكاميرات',
   'nav.attendance': 'الحضور',
@@ -131,9 +157,22 @@ export const ADMIN_AR: TranslationDict = {
   'login.failed': 'تعذر تسجيل الدخول. تحقق من البريد وكلمة المرور ثم أعد المحاولة.',
   'login.demo': 'حساب تجريبي: admin@demo-nursery.local / Passw0rd!123',
 
+  'nurseries.title': 'الحضانات',
+  'nurseries.subtitle': 'الحضانات التي تديرها — كل غرفة وكاميرا تتبع حضانة واحدة.',
+  'nurseries.new': 'حضانة جديدة',
+  'nurseries.timeZone': 'المنطقة الزمنية',
+  'nurseries.address': 'العنوان',
+  'nurseries.create': 'إنشاء حضانة',
+  'nurseries.creating': 'جارٍ الإنشاء…',
+  'nurseries.loading': 'جارٍ تحميل الحضانات…',
+  'nurseries.empty': 'لا توجد حضانات بعد. أنشئ الأولى للبدء.',
+  'nurseries.loadError': 'تعذر تحميل الحضانات الآن.',
+  'nurseries.createError': 'تعذر إنشاء هذه الحضانة. تحقق من الحقول ثم أعد المحاولة.',
+
   'rooms.title': 'الغرف',
   'rooms.subtitle': 'غرف الحضانة وحالة تفعيلها.',
   'rooms.new': 'غرفة جديدة',
+  'rooms.nursery': 'الحضانة',
   'rooms.nurseryId': 'معرّف الحضانة',
   'rooms.code': 'الرمز',
   'rooms.type': 'نوع الغرفة',
@@ -142,10 +181,13 @@ export const ADMIN_AR: TranslationDict = {
   'rooms.creating': 'جارٍ الإنشاء…',
   'rooms.loading': 'جارٍ تحميل الغرف…',
   'rooms.empty': 'لا توجد غرف بعد. أنشئ الأولى للبدء.',
+  'rooms.loadError': 'تعذر تحميل الغرف الآن.',
+  'rooms.createError': 'تعذر إنشاء هذه الغرفة. تحقق من الحضانة ثم أعد المحاولة.',
 
   'cameras.title': 'الكاميرات',
   'cameras.subtitle': 'تفاصيل RTSP مشفّرة أثناء التخزين ولا تُعاد من الواجهة بعد الإنشاء.',
   'cameras.new': 'كاميرا جديدة',
+  'cameras.nursery': 'الحضانة',
   'cameras.nurseryId': 'معرّف الحضانة',
   'cameras.location': 'الموقع',
   'cameras.rtsp': 'رابط RTSP',
@@ -161,6 +203,8 @@ export const ADMIN_AR: TranslationDict = {
   'cameras.enable': 'تفعيل',
   'cameras.disable': 'تعطيل',
   'cameras.activeCol': 'مفعّلة',
+  'cameras.loadError': 'تعذر تحميل الكاميرات الآن.',
+  'cameras.createError': 'تعذر إنشاء هذه الكاميرا. تحقق من الحقول ثم أعد المحاولة.',
 
   'attendance.title': 'الحضور',
   'attendance.subtitle': 'ابحث عن طفل بالمعرّف لتسجيل الحضور أو الانصراف.',
@@ -176,6 +220,9 @@ export const ADMIN_AR: TranslationDict = {
   'attendance.checkIn': 'تسجيل حضور',
   'attendance.checkOut': 'تسجيل انصراف',
   'attendance.working': 'جارٍ التنفيذ…',
+  'attendance.lookupError': 'تعذر البحث عن الحضور لهذا المعرّف.',
+  'attendance.checkInError': 'فشل تسجيل الحضور. قد يكون الطفل مسجّل حضورًا بالفعل.',
+  'attendance.checkOutError': 'فشل تسجيل الانصراف. قد يكون الطفل مسجّل انصرافًا بالفعل.',
 
   'audit.title': 'سجل التدقيق',
   'audit.subtitle': 'كل الإجراءات الحساسة في النظام، الأحدث أولاً.',
@@ -191,5 +238,6 @@ export const ADMIN_AR: TranslationDict = {
   'audit.system': 'النظام',
   'audit.prev': 'السابق',
   'audit.next': 'التالي',
-  'audit.page': 'صفحة {{page}} من {{total}}'
+  'audit.page': 'صفحة {{page}} من {{total}}',
+  'audit.loadError': 'تعذر تحميل سجل التدقيق الآن.'
 };

@@ -23,7 +23,7 @@
   @if (isLoading()) {
     <p class="loading-text">{{ 'audit.loading' | t }}</p>
   } @else if (errorMessage()) {
-    <p class="error-text">{{ errorMessage() }}</p>
+    <p class="error-text">{{ errorMessage()! | t }}</p>
   } @else if (logs().length === 0) {
     <div class="empty-state card">
       <p>{{ 'audit.empty' | t }}</p>

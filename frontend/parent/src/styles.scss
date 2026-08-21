@@ -1,4 +1,8 @@
 :root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
   --color-bg: #faf7f2;
   --color-surface: #ffffff;
   --color-surface-muted: #f2f0ea;
@@ -192,7 +196,17 @@ button {
 .page {
   max-width: 960px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 4rem;
+  padding: 2rem max(1.5rem, var(--safe-area-right)) calc(4rem + var(--safe-area-bottom))
+    max(1.5rem, var(--safe-area-left));
+}
+
+body.capacitor-native {
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body.capacitor-native .page {
+  padding-top: 1.25rem;
 }
 
 .empty-state {

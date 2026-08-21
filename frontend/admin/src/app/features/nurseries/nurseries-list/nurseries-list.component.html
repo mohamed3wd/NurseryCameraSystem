@@ -1,0 +1,77 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>{{ 'nurseries.title' | t }}</h1>
+      <p>{{ 'nurseries.subtitle' | t }}</p>
+    </div>
+    <button class="btn btn-primary" type="button" (click)="toggleForm()">
+      {{ showForm() ? ('common.cancel' | t) : ('nurseries.new' | t) }}
+    </button>
+  </div>
+
+  @if (showForm()) {
+    <form class="card new-nursery-form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="inline-form">
+        <div class="form-field">
+          <label for="name">{{ 'common.name' | t }}</label>
+          <input id="name" type="text" formControlName="name" placeholder="Sunshine Nursery" />
+        </div>
+        <div class="form-field">
+          <label for="timeZoneId">{{ 'nurseries.timeZone' | t }}</label>
+          <input id="timeZoneId" type="text" formControlName="timeZoneId" placeholder="UTC" />
+        </div>
+        <div class="form-field grow">
+          <label for="address">{{ 'nurseries.address' | t }}</label>
+          <input id="address" type="text" formControlName="address" placeholder="1 Demo Street" />
+        </div>
+        <button class="btn btn-primary" type="submit" [disabled]="isSubmitting()">
+          {{ isSubmitting() ? ('nurseries.creating' | t) : ('nurseries.create' | t) }}
+        </button>
+      </div>
+      @if (formError()) {
+        <p class="error-text">{{ formError()! | t }}</p>
+      }
+    </form>
+  }
+
+  @if (isLoading()) {
+    <p class="loading-text">{{ 'nurseries.loading' | t }}</p>
+  } @else if (errorMessage()) {
+    <p class="error-text">{{ errorMessage()! | t }}</p>
+  } @else if (nurseries().length === 0) {
+    <div class="empty-state card">
+      <p>{{ 'nurseries.empty' | t }}</p>
+    </div>
+  } @else {
+    <div class="card table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'common.name' | t }}</th>
+            <th>{{ 'nurseries.timeZone' | t }}</th>
+            <th>{{ 'nurseries.address' | t }}</th>
+            <th>{{ 'common.status' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (nursery of nurseries(); track nursery.id) {
+            <tr>
+              <td>{{ nursery.name }}</td>
+              <td>{{ nursery.timeZoneId }}</td>
+              <td>{{ nursery.address || '—' }}</td>
+              <td>
+                <span
+                  class="badge"
+                  [class.badge-success]="nursery.isActive"
+                  [class.badge-neutral]="!nursery.isActive"
+                >
+                  {{ nursery.isActive ? ('common.active' | t) : ('common.inactive' | t) }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

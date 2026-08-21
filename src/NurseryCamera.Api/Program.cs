@@ -160,9 +160,14 @@ if (!app.Environment.IsDevelopment())
 
 app.UseResponseCompression();
 
-app.UseHttpsRedirection();
-
+// CORS must run before HTTPS redirection so browser preflight (OPTIONS) gets
+// Access-Control-* headers even when a redirect would otherwise apply.
 app.UseCors(CorsPolicyName);
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseIpRateLimiting();
 

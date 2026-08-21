@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NurseryCam</string>
+    <string name="title_activity_main">NurseryCam</string>
+    <string name="package_name">com.nurserycam.parent</string>
+    <string name="custom_url_scheme">com.nurserycam.parent</string>
+</resources>
